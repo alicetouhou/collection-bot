@@ -44,8 +44,11 @@ def get_trade_embed(ctx: crescent.Context, key: str) -> None:
 
     return embed
 
+trade_group = crescent.Group("trade")
+
 @plugin.include
-@crescent.command(name="tradebegin", description="Start a trade with another player.")
+@trade_group.child
+@crescent.command(name="begin", description="Start a trade with another player.")
 class TradeCommand:
     member = crescent.option(hikari.User, "Enter a server member's @.", name="username")
     async def callback(self, ctx: crescent.Context) -> None:
@@ -70,7 +73,8 @@ class TradeCommand:
                 await ctx.respond(f"Timed out! {ctx.user.mention}'s and {other_user.mention}'s trade was not completed within 2 minutes.")
 
 @plugin.include
-@crescent.command(name="tradeconfirm", description="Confirm your trade. Trades cannot be modified once confirmed.")
+@trade_group.child
+@crescent.command(name="confirm", description="Confirm your trade. Trades cannot be modified once confirmed.")
 class TradeConfirmCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         id_list = current_trades.keys()
@@ -115,7 +119,8 @@ class TradeConfirmCommand:
 
 
 @plugin.include
-@crescent.command(name="tradecancel", description="Cancel your current trade.")
+@trade_group.child
+@crescent.command(name="cancel", description="Cancel your current trade.")
 class TradeConfirmCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         id_list = current_trades.keys()
@@ -135,7 +140,8 @@ class TradeConfirmCommand:
         del current_trades[trade_id]
 
 @plugin.include
-@crescent.command(name="tradeadd", description="Add a character to trade by ID.")
+@trade_group.child
+@crescent.command(name="add", description="Add a character to trade by ID.")
 class TradeAddCommand:
     id = crescent.option(str, "Enter a character's ID.", name="id")
     async def callback(self, ctx: crescent.Context) -> None:
