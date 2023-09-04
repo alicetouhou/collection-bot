@@ -9,7 +9,7 @@ dbpool = psycopg2.pool.ThreadedConnectionPool(database="characters",
                                             password=os.environ["DB_PASSWORD"],
                                             port="5432",
                                             minconn=0,
-                                            maxconn=5)
+                                            maxconn=100)
 
 @contextmanager
 def db_cursor():
