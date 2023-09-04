@@ -17,15 +17,19 @@ class Character:
     first_name = ""
     last_name = ""
     anime = ""
+    manga = ""
+    game = ""
     images = []
     favorites = 0
     value = 0
     id = 0
 
-    def __init__(self, first_name=first_name, last_name=last_name, anime=anime, images=images, id=id, favorites=favorites):
-        self.first_name = first_name
+    def __init__(self, first_name=first_name, last_name=last_name, anime=anime, images=images, id=id, favorites=favorites, manga=manga, game=game):
+        self.first_name = first_name.replace("&#039;","'")
         self.last_name = last_name
         self.anime = anime
+        self.manga = manga
+        self.game = game
         self.images = images
         self.id = id
         self.favorites = favorites
@@ -45,7 +49,7 @@ class Character:
     def get_images_str(self) -> str:
         return ",".join(self.images)
 
-class Anime:
+class Series:
     id = 0
     title = ""
 
@@ -73,19 +77,28 @@ class CharacterParser(HTMLParser):
                 return
             self.favorites_list.append(m.groups()[0].replace(",",""))
 
-def get_top_anime_ids(amount, offset):
-    x = requests.get(f'https://api.myanimelist.net/v2/anime/ranking?ranking_type=all&limit={amount}&offset={offset}', headers = HEADERS)
+def get_top_anime_ids(amount, offset, type="anime"):
+    x = requests.get(f'https://api.myanimelist.net/v2/{type}/ranking?ranking_type=all&limit={amount}&offset={offset}', headers = HEADERS)
     anime_json = json.loads(x.text)
 
     output = []
     for anime in anime_json['data']:
-        output.append(Anime(id=anime['node']['id'], title=anime['node']['title']))
+        output.append(Series(id=anime['node']['id'], title=anime['node']['title']))
 
     return output
 
-def get_anime_characters(anime: Anime):
+def get_series_by_ids(ids: list[int], type="anime"):
+    output = []
+    for id in ids:
+        x = requests.get(f'https://api.myanimelist.net/v2/{type}/{id}', headers = HEADERS)
+        series_json = json.loads(x.text)
+        output.append(Series(id=series_json['id'], title=series_json['title']))
+    return output
+
+
+def get_anime_characters(anime: Series, type="anime", game_override="",favorites_scale=1):
     character_list = []
-    anime_html = requests.get(f'https://myanimelist.net/anime/{anime.id}/x/characters')
+    anime_html = requests.get(f'https://myanimelist.net/{type}/{anime.id}/x/characters')
     parser = CharacterParser()
     parser.id_list = []
     parser.favorites_list = []
@@ -102,6 +115,7 @@ def get_anime_characters(anime: Anime):
             favorites = "0"
         
         if favorites != "0":
+            favorites = int(favorites) * favorites_scale
             try:
                 char_request = requests.get(f' https://api.myanimelist.net/v2/characters/{character_id}?fields=first_name,last_name,pictures',headers = HEADERS)
                 char_json = json.loads(char_request.text)
@@ -110,7 +124,10 @@ def get_anime_characters(anime: Anime):
                     pictures = []
                     for value in char_json["pictures"]:
                         pictures.append(value["medium"])
-                    new_character = Character(id=character_id, first_name=char_json["first_name"], last_name=char_json["last_name"], anime=anime.title, images=pictures, favorites=favorites)
+                    if type == "anime":
+                        new_character = Character(id=character_id, first_name=char_json["first_name"], last_name=char_json["last_name"], anime=anime.title, manga="", game=game_override, images=pictures, favorites=favorites)
+                    elif type == "manga":
+                        new_character = Character(id=character_id, first_name=char_json["first_name"], last_name=char_json["last_name"], anime="", manga=anime.title, game=game_override, images=pictures, favorites=favorites)
                     print(new_character)
                     character_list.append(new_character)
             except(json.decoder.JSONDecodeError):
@@ -122,49 +139,32 @@ def get_anime_characters(anime: Anime):
     parser.reset()
 
     return character_list
-
-def save_to_csv(character_list) -> None:
-    with open('bot\data\characters.csv', 'a+', newline='', encoding="utf-8") as csvfile:
-        writer = csv.writer(csvfile, delimiter='|', quotechar='$', quoting=csv.QUOTE_MINIMAL)
-        csvfile.seek(0)
-        reader = csv.DictReader(csvfile, delimiter='|', quotechar='$', quoting=csv.QUOTE_MINIMAL)
-        rows = list(reader)
-        existing_ids = []
-        existing_ids_dict = {}
-        for index,row in enumerate(rows):
-            existing_ids.append(row["id"])
-            existing_ids_dict[row["id"]] = index
-        for index,character in enumerate(character_list):
-            if not character.id in existing_ids:
-                rows.append({
-                    "id" : character.id,
-                    "first_name" : character.first_name,
-                    "last_name" : character.last_name,
-                    "anime_list" : character.anime,
-                    "pictures" : ",".join(character.images)
-                })
-            else:
-                list_of_animes = rows[existing_ids_dict[character.id]]["anime_list"].split(",")
-                list_of_animes.append(character.anime)
-                rows[existing_ids_dict[character.id]]["anime_list"] = ",".join(list_of_animes)
-
-        csvfile.seek(0)
-        csvfile.readline()
-        csvfile.truncate(csvfile.tell())
-
-        for row in rows:
-            writer.writerow([row["id"]] + [row["first_name"]] + [row["last_name"]] + [row["anime_list"]] + [row["pictures"]])
         
-def save_to_db(database, character_list: list[Character]) -> None:
+def save_to_db(database, character_list: list[Character], type="anime") -> None:
     cursor = database.cursor()
     for character in character_list:
-        cursor.execute("SELECT anime_list FROM CHARACTERS WHERE ID = %(id)s", {"id" : character.id})
-        old_anime_list = cursor.fetchone()
-        if not old_anime_list is None:
-            new_anime_list = old_anime_list[0] + "," + character.anime
-            cursor.execute("UPDATE CHARACTERS SET anime_list = %(newlist)s WHERE ID = %(id)s", {"id" : character.id, "newlist" : new_anime_list})
-        sql = """INSERT INTO CHARACTERS VALUES (%(id)s,%(first_name)s,%(last_name)s,%(anime)s,%(images)s,%(value)s) ON CONFLICT DO NOTHING"""
-        cursor.execute(sql, {"id" : character.id, "first_name" : character.first_name, "last_name" : character.last_name, "anime" : character.anime, "images" : character.get_images_str(), "value" : character.get_value()})
+        if type == "anime":
+            cursor.execute("SELECT anime_list FROM CHARACTERS WHERE ID = %(id)s", {"id" : character.id})
+            old_anime_list = cursor.fetchone()
+            if not old_anime_list is None and not character.anime in old_anime_list[0]:
+                new_anime_list = old_anime_list[0] + "," + character.anime
+                cursor.execute("UPDATE CHARACTERS SET anime_list = %(newlist)s WHERE ID = %(id)s", {"id" : character.id, "newlist" : new_anime_list})
+            sql = """INSERT INTO CHARACTERS VALUES (%(id)s,%(first_name)s,%(last_name)s,%(anime)s,%(images)s,%(value)s,%(manga)s,%(games)s) ON CONFLICT DO NOTHING"""
+            cursor.execute(sql, {"id" : character.id, "first_name" : character.first_name, "last_name" : character.last_name, "anime" : character.anime, "images" : character.get_images_str(), "value" : character.get_value(), "manga" : "", "games" : ""})
+
+        if type == "manga":
+            cursor.execute("SELECT manga_list FROM CHARACTERS WHERE ID = %(id)s", {"id" : character.id})
+            old_manga_list = cursor.fetchone()
+            if not old_manga_list is None and not character.manga in old_manga_list[0]:
+                new_manga_list = old_manga_list[0] + "," + character.manga
+                cursor.execute("UPDATE CHARACTERS SET manga_list = %(newlist)s WHERE ID = %(id)s", {"id" : character.id, "newlist" : new_manga_list})
+            sql = """INSERT INTO CHARACTERS VALUES (%(id)s,%(first_name)s,%(last_name)s,%(anime)s,%(images)s,%(value)s,%(manga)s,%(games)s) ON CONFLICT DO NOTHING"""
+            cursor.execute(sql, {"id" : character.id, "first_name" : character.first_name, "last_name" : character.last_name, "anime" : "", "images" : character.get_images_str(), "value" : character.get_value(), "manga" : character.manga, "games" : ""})
+
+        if type == "game":
+            cursor.execute("SELECT games_list FROM CHARACTERS WHERE ID = %(id)s", {"id" : character.id})
+            sql = """INSERT INTO CHARACTERS VALUES (%(id)s,%(first_name)s,%(last_name)s,%(anime)s,%(images)s,%(value)s,%(manga)s,%(games)s) ON CONFLICT DO NOTHING"""
+            cursor.execute(sql, {"id" : character.id, "first_name" : character.first_name, "last_name" : character.last_name, "anime" : "", "images" : character.get_images_str(), "value" : character.get_value(), "manga" : "", "games" : character.game})
 
     outputquery = "COPY ({0}) TO STDOUT WITH DELIMITER '|' CSV HEADER".format("SELECT * FROM CHARACTERS")
     with open('bot\data\db.csv', 'w', encoding="utf-8") as f:
@@ -183,12 +183,29 @@ def main():
     cursor = database.cursor()
 
     #cursor.execute("DROP TABLE IF EXISTS CHARACTERS")
-    cursor.execute("CREATE TABLE IF NOT EXISTS CHARACTERS(ID int, first_name varchar(255), last_name varchar(255), anime_list varchar(1027), pictures varchar(2055), value int, PRIMARY KEY (ID))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS CHARACTERS(ID int, first_name varchar(255), last_name varchar(255), anime_list varchar(1027), pictures varchar(2055), value int, manga_list varchar(1027), games_list varchar(1027), PRIMARY KEY (ID))")
 
-    anime_list = get_top_anime_ids(10,60)
+    extras = [8557, 39071, 18897]
+    anime_list = get_series_by_ids(extras,type="anime")
+    #anime_list = get_top_anime_ids(25,656,type="anime")
     for anime in anime_list:
-         characters = get_anime_characters(anime)
-         save_to_db(database, characters)
+        characters = get_anime_characters(anime,type="anime")
+        save_to_db(database, characters,type="anime")
+
+    # manga_list = []
+    # manga_list = get_series_by_ids(manga_list,type="manga")
+    # for manga in manga_list:
+    #     characters = get_anime_characters(manga,type="manga")
+    #     save_to_db(database, characters,type="manga")
+
+    # games_list_a = [51105]
+    # games_list_m = []
+
+    # games_list_a = get_series_by_ids(games_list_a,type="anime")
+    # game_name = "NieR:Automata"
+    # for game in games_list_a:
+    #     characters = get_anime_characters(game,type="anime",game_override=game_name,favorites_scale=2)
+    #     save_to_db(database, characters,type="game")
 
 if __name__ == "__main__":
     main()

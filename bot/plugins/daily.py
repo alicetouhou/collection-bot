@@ -7,7 +7,7 @@ import time
 plugin = crescent.Plugin[hikari.GatewayBot, None]()
 
 @plugin.include
-@crescent.command(name="daily", description="Claim your daily rolls.")
+@crescent.command(name="daily", description="Claim your daily character claims.")
 class ListCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         last_claim_time = get_daily_claimed_time(ctx.guild.id, ctx.user.id)
@@ -17,7 +17,7 @@ class ListCommand:
         if current_time - last_claim_time >= 86400:
             add_claims(ctx.guild.id, ctx.user.id, 5)
             set_daily_claimed_time(ctx.guild.id, ctx.user.id, current_time)
-            message = "Daily claimed! 5 rolls have been added. Next daily can be claimed in **24 hours**."
+            message = "Daily claimed! 5 claims have been added. Next daily can be claimed in **24 hours**."
         else:
             diff = (last_claim_time + 86400) - current_time
             hours = int(diff/3600)

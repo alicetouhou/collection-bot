@@ -4,14 +4,18 @@ class Character:
     first_name = ""
     last_name = ""
     anime = ""
+    manga = ""
+    game = ""
     images = []
     favorites = 0
     value = 0
 
-    def __init__(self, first_name=first_name, last_name=last_name, anime=anime, images=images, id=id, favorites=favorites):
+    def __init__(self, first_name=first_name, last_name=last_name, anime=anime, images=images, id=id, favorites=favorites, manga=manga, game=game):
         self.first_name = first_name
         self.last_name = last_name
         self.anime = anime
+        self.manga = manga
+        self.game = game
         self.images = images
         self.id = id
         self.favorites = favorites
@@ -20,7 +24,9 @@ class Character:
     def __init__(self, data: tuple):
         self.first_name = data[1]
         self.last_name = data[2]
-        self.anime = data[3].split(",")
+        self.anime = data[3].split(",") if data[3] else []
+        self.manga = data[6].split(",") if data[6] else []
+        self.games = data[7].split(",") if data[7] else []
         self.images = data[4].split(",")
         self.id = data[0]
         self.value = data[5]
