@@ -102,6 +102,19 @@ def get_wishes(guild: int, id: int) -> list[Character]:
                 character_list.append(Character(data))
         return character_list
     
+def get_users_who_wished(guild: int, character: Character) -> list[int]:
+    guild_str = f"players_{guild}"
+    with bot.dbpool.db_cursor() as cur:
+        cur.execute(f"SELECT id,wishlist FROM {guild_str}")
+        lists = cur.fetchall()
+        output = []
+        for i in lists:
+            id = i[0]
+            current_list = i[1].split(",")
+            if str(character.id) in current_list:
+                output.append(id)
+        return output
+    
 def is_claimed(guild: int, character: Character) -> bool:
     guild_str = f"players_{guild}"
     with bot.dbpool.db_cursor() as cur:

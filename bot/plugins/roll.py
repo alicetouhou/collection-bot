@@ -1,7 +1,7 @@
 import crescent
 import hikari
 import miru
-from bot.utils import Plugin, pick_random_character, claim_character, add_claims, get_claims, add_rolls, get_rolls, is_claimed, add_currency
+from bot.utils import Plugin, pick_random_character, claim_character, add_claims, get_claims, add_rolls, get_rolls, is_claimed, add_currency, get_users_who_wished, search_characters
 from bot.character import Character
 
 plugin = crescent.Plugin[hikari.GatewayBot, None]()
@@ -46,7 +46,6 @@ class RollCommand:
         if rolls <= 0:
             await ctx.respond(f"You have no rolls left! Use **/getrolls** to claim more.")
             return
-        add_rolls(ctx.guild.id, ctx.user.id, -1)
         picked_character = pick_random_character()
         claimed = is_claimed(ctx.guild.id, picked_character)
 
@@ -75,13 +74,21 @@ class RollCommand:
             animeography += f'*and {count-4} more..*'
 
         embed.add_field(name="Appears in:", value=animeography)
-        embed.set_footer(f"{rolls} rolls remaining")
+        embed.set_footer(f"{rolls-1} rolls remaining")
+
+        wishlist_people = get_users_who_wished(ctx.guild.id, picked_character)
+
+        wishlist_people_formatted = ""
+        for id in wishlist_people:
+            wishlist_people_formatted += f"<@{id}> "
 
         view = ClaimView(timeout=60, character=picked_character)
 
         if claimed:
             view = FragmentView(timeout=60, character=picked_character)
 
-        await ctx.respond(embed, components=view)
+        await ctx.respond(wishlist_people_formatted, embed=embed, components=view, user_mentions=wishlist_people)
         message = ctx.interaction.fetch_initial_response()
         await view.start(message)
+
+        add_rolls(ctx.guild.id, ctx.user.id, -1)
