@@ -21,14 +21,17 @@ def pick_random_character() -> Character:
         data = cur.fetchone()
         return Character(data)
     
-def claim_character(guild: int, id: int, character: Character) -> None:
+def claim_character(guild: int, id: int, character: Character, prepend=False) -> None:
     guild_str = f"players_{guild}"
     add_player_to_db(guild, id)
     with bot.dbpool.db_cursor() as cur:
         cur.execute(f"SELECT characters FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
         old_list = cur.fetchone()
         if not old_list is None:
-            new_list = old_list[0] + "," + str(character.id)
+            if prepend == False:
+                new_list = old_list[0] + "," + str(character.id)
+            else:
+                new_list = str(character.id) + "," + old_list[0]
             cur.execute(f"UPDATE {guild_str} SET characters = %(newlist)s WHERE ID = %(id)s", {"id": str(id), "newlist" : new_list})
 
 def remove_character(guild: int, id: int, character: Character) -> None:
@@ -48,6 +51,47 @@ def get_characters(guild: int, id: int) -> list[Character]:
     add_player_to_db(guild, id)
     with bot.dbpool.db_cursor() as cur:
         cur.execute(f"SELECT characters FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
+        character_str = cur.fetchone()[0]
+        character_ids_list = character_str.split(",")
+        character_list = []
+        for char_id in character_ids_list:
+            if char_id != '':
+                cur.execute("""SELECT * FROM CHARACTERS WHERE ID = %(id)s""", {"id" : int(char_id)})
+                data = cur.fetchone()
+                character_list.append(Character(data))
+        return character_list
+    
+def reorder(guild: int, id: int, character: Character):
+    remove_character(guild, id, character)
+    claim_character(guild, id, character, prepend=True)
+
+def add_wish(guild: int, id: int, character: Character) -> None:
+    guild_str = f"players_{guild}"
+    add_player_to_db(guild, id)
+    with bot.dbpool.db_cursor() as cur:
+        cur.execute(f"SELECT wishlist FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
+        old_list = cur.fetchone()
+        if not old_list is None:
+            new_list = old_list[0] + "," + str(character.id)
+            cur.execute(f"UPDATE {guild_str} SET wishlist = %(newlist)s WHERE ID = %(id)s", {"id": str(id), "newlist" : new_list})
+
+def remove_wish(guild: int, id: int, character: Character) -> None:
+    guild_str = f"players_{guild}"
+    add_player_to_db(guild, id)
+    with bot.dbpool.db_cursor() as cur:
+        cur.execute(f"SELECT wishlist FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
+        old_list = cur.fetchone()
+        if not old_list is None:
+            new_list = old_list[0].split(",")
+            new_list.remove(str(character.id))
+            new_list = ",".join(new_list)
+            cur.execute(f"UPDATE {guild_str} SET wishlist = %(newlist)s WHERE ID = %(id)s", {"id": str(id), "newlist" : new_list})
+
+def get_wishes(guild: int, id: int) -> list[Character]:
+    guild_str = f"players_{guild}"
+    add_player_to_db(guild, id)
+    with bot.dbpool.db_cursor() as cur:
+        cur.execute(f"SELECT wishlist FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
         character_str = cur.fetchone()[0]
         character_ids_list = character_str.split(",")
         character_list = []

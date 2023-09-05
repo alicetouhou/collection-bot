@@ -149,7 +149,6 @@ class TradeAddCommand:
         if self.id > 2147483647 or self.id < 1:
             await ctx.respond(f"{self.id} is not a valid ID!")
             return          
-        print(current_trades)
         characters = get_characters(ctx.guild.id, ctx.user.id)
 
         included = False
