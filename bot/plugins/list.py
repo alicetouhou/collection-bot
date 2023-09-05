@@ -22,7 +22,7 @@ class ScrollButtons(miru.View):
     def get_description(self) -> str:
         description = ''
         for character in self.pages[self.page_number]:
-            description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` {character.first_name} {character.last_name}\n"
+            description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` **{character.first_name} {character.last_name}** • <:wishfragments:1148459769980530740> {character.value}\n"
         return description
 
     @miru.button(label="", emoji="⬅️", style=hikari.ButtonStyle.SECONDARY)
