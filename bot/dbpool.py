@@ -4,14 +4,15 @@ from contextlib import contextmanager
 import os
 
 dbpool = psycopg2.pool.ThreadedConnectionPool(
-    database="characters",
-    host="localhost",
-    user="postgres",
-    password="password",
-    port="5432",
+    database=os.environ["DATABASE"],
+    host=os.environ["DATABASE_HOST"],
+    user=os.environ["DATABASE_USER"],
+    password=os.environ["DATABASE_PASSWORD"],
+    port=os.environ["DATABASE_PORT"],
     minconn=0,
     maxconn=100,
 )
+
 
 @contextmanager
 def db_cursor():
@@ -25,6 +26,7 @@ def db_cursor():
         raise
     finally:
         dbpool.putconn(conn)
+
 
 with db_cursor() as cur:
     cur.execute("CREATE TABLE IF NOT EXISTS servers (ID varchar(31), PRIMARY KEY (ID))")

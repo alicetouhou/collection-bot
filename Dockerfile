@@ -6,7 +6,7 @@ ARG VERSION_TAG
 ENV VERSION=$VERSION_TAG
 
 # Copy files for poetry
-COPY requirements.txt /app/requirements.toml
+COPY requirements.txt /app/requirements.txt
 
 # Download dependencies
 WORKDIR /app/
