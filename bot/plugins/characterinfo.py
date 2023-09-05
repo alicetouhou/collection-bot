@@ -117,7 +117,7 @@ class ListCommand:
         else:
             character = character_list[0]
             name = character.first_name + " " + character.last_name
-            description = f'ID `{character.id}` • {character.value}<:lunar_essence:817912848784949268>'
+            description = f'ID `{character.id}` • {character.value}<:wishfragments:1148459769980530740>'
 
             embed = hikari.embeds.Embed(title=name, color="f598df", description=description)
 

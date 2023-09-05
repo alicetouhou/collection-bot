@@ -11,7 +11,7 @@ Plugin = crescent.Plugin[hikari.GatewayBot, Model]
 def add_player_to_db(guild: int, id: int):
     guild_str = f"players_{guild}"
     with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"INSERT INTO {guild_str} VALUES (%(id)s,'',%(currency)s,0,0,10,0,'','') ON CONFLICT DO NOTHING", {"id": str(id), "currency": 0}) 
+        cur.execute(f"INSERT INTO {guild_str} VALUES (%(id)s,'',%(currency)s,3,0,10,0,'','') ON CONFLICT DO NOTHING", {"id": str(id), "currency": 0}) 
 
 def pick_random_character() -> Character:
     with bot.dbpool.db_cursor() as cur:

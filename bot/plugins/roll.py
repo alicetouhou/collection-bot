@@ -17,7 +17,7 @@ class ClaimView(miru.View):
     async def claim_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
         claims = get_claims(ctx.guild_id, ctx.user.id)
         if (claims <= 0):
-            await ctx.respond(f"**{ctx.user.mention}** attempted to claim, but has **0** claims left!")
+            await ctx.respond(f"**{ctx.user.mention}** attempted to claim, but has **0** claims left!\nUse **/daily** to get more, or buy them with /shop.")
             return
         self.stop()
         claim_character(ctx.guild_id, ctx.user.id, self.character)
@@ -32,11 +32,11 @@ class FragmentView(miru.View):
         miru.View.__init__(self, timeout=kwargs['timeout'])
         self.character = kwargs['character']
 
-    @miru.button(label=f"Claim Fragments!", emoji="<:lunar_essence:817912848784949268>", style=hikari.ButtonStyle.PRIMARY)
+    @miru.button(label=f"Claim Fragments!", emoji="<:wishfragments:1148459769980530740>", style=hikari.ButtonStyle.PRIMARY)
     async def claim_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
         self.stop()
         add_currency(ctx.guild_id, ctx.user.id, self.character.value)
-        await ctx.respond(f"**{ctx.user.mention}** obtained **{self.character.value}**<:lunar_essence:817912848784949268>")
+        await ctx.respond(f"**{ctx.user.mention}** obtained **{self.character.value}**<:wishfragments:1148459769980530740>")
 
 @plugin.include
 @crescent.command(name="roll", description="Roll a character.")
@@ -51,7 +51,7 @@ class RollCommand:
         claimed = is_claimed(ctx.guild.id, picked_character)
 
         name = picked_character.first_name + " " + picked_character.last_name
-        description = f'ID `{picked_character.id}` • {picked_character.value}<:lunar_essence:817912848784949268>'
+        description = f'ID `{picked_character.id}` • {picked_character.value}<:wishfragments:1148459769980530740>'
         embed = hikari.embeds.Embed(title=name, color="f598df", description=description)
         embed.set_image(picked_character.images[0])
         embed.set_image(picked_character.images[0])
@@ -75,6 +75,7 @@ class RollCommand:
             animeography += f'*and {count-4} more..*'
 
         embed.add_field(name="Appears in:", value=animeography)
+        embed.set_footer(f"{rolls} rolls remaining")
 
         view = ClaimView(timeout=60, character=picked_character)
 
