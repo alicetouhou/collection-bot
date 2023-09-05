@@ -1,10 +1,7 @@
 version: "3.8"
 services:
   bot:
-    # image: lunarmagpie/kozusu:latest
-    build:
-      dockerfile: Dockerfile
-      context: .
+    image: lunarmagpie/kozusu:latest
     restart: always
     network_mode: bridge
     depends_on:
