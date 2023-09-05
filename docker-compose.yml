@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  bot:
+    image: lunarmagpie/kozusu:latest
+    restart: always
+    network_mode: bridge
+    depends_on:
+      - db
+    links:
+      - db
+    env_file:
+      - .env
+
+  db:
+    image: postgres
+    restart: always
+    network_mode: bridge
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: characters
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: 5432
+
+volumes:
+  db-data:
+    driver: local
