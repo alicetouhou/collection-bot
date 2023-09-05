@@ -16,5 +16,6 @@ class ListCommand:
         for character in character_list:
             description += f"`{'0' * (6 - int(math.log(character.id, 10) + 1))}{character.id}` {character.first_name} {character.last_name}\n"
         embed = hikari.embeds.Embed(title=f"{user}'s Characters", color="f598df", description=description)
-        embed.set_thumbnail(character_list[0].images[0])
+        if character_list:
+            embed.set_thumbnail(character_list[0].images[0])
         await ctx.respond(embed)
