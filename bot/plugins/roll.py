@@ -44,7 +44,7 @@ class RollCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         rolls = get_rolls(ctx.guild.id, ctx.user.id)
         if rolls <= 0:
-            await ctx.respond(f"You have no rolls left! Use **/claimrolls** to claim more.")
+            await ctx.respond(f"You have no rolls left! Use **/getrolls** to claim more.")
             return
         add_rolls(ctx.guild.id, ctx.user.id, -1)
         picked_character = pick_random_character()

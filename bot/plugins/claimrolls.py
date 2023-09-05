@@ -7,7 +7,7 @@ import time
 plugin = crescent.Plugin[hikari.GatewayBot, None]()
 
 @plugin.include
-@crescent.command(name="claimrolls", description="Claim your rolls. Regenerates every 15 minutes, and 30 can be kept at once.")
+@crescent.command(name="getrolls", description="Get your rolls. One roll regenerates every 15 minutes, and 30 can be stored until regeration stops.")
 class ListCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         last_claim_time = get_daily_rolls_time(ctx.guild.id, ctx.user.id)

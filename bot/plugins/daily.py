@@ -3,6 +3,7 @@ import hikari
 from bot.utils import Plugin, get_daily_claimed_time, set_daily_claimed_time, add_claims
 from bot.character import Character
 import time
+import random
 
 plugin = crescent.Plugin[hikari.GatewayBot, None]()
 
@@ -15,9 +16,10 @@ class ListCommand:
         message = ""
 
         if current_time - last_claim_time >= 86400:
+            wishfragment_number = random.randint(350,600)
             add_claims(ctx.guild.id, ctx.user.id, 5)
             set_daily_claimed_time(ctx.guild.id, ctx.user.id, current_time)
-            message = "Daily claimed! 5 claims have been added. Next daily can be claimed in **24 hours**."
+            message = f"Daily claimed! **5** claims have been added to your inventory, as well as <:wishfragments:1148459769980530740> **{wishfragment_number}** wish fragments. Next daily can be claimed in **24 hours**."
         else:
             diff = (last_claim_time + 86400) - current_time
             hours = int(diff/3600)
