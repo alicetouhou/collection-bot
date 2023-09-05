@@ -19,5 +19,9 @@ client.plugins.load_folder("bot.plugins")
 
 bot.subscribe(hikari.StartingEvent, model.on_start)
 bot.subscribe(hikari.StoppedEvent, model.on_stop)
+bot.subscribe(hikari.ShardReadyEvent, model.reset_guild_counter)
+bot.subscribe(hikari.GuildJoinEvent, model.increment_guild_counter)
+bot.subscribe(hikari.GuildLeaveEvent, model.decrement_guild_counter)
+
 
 bot.run()
