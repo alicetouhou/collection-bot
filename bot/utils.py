@@ -261,7 +261,7 @@ def add_characters_to_db() -> None:
         lis = csv.reader(f, delimiter="|")
         tup = [tuple(x) for x in lis]
 
-        cur.execute("DROP TABLE characters")
+        cur.execute("DROP TABLE IF EXISTS characters")
         cur.execute("CREATE TABLE IF NOT EXISTS characters(ID int, first_name varchar(255), last_name varchar(255), anime_list varchar(1027), pictures varchar(2055), value int, manga_list varchar(1027), games_list varchar(1027), PRIMARY KEY (ID))")
         for x in tup:
             break
