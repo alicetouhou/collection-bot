@@ -13,7 +13,6 @@ dbpool = psycopg2.pool.ThreadedConnectionPool(
     maxconn=100,
 )
 
-
 @contextmanager
 def db_cursor():
     conn = dbpool.getconn()
