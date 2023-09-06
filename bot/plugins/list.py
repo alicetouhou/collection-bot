@@ -48,7 +48,7 @@ class ListCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         user = ctx.user if self.member is None else self.member
         character_list = get_characters(ctx.guild.id, user.id)
-        if len(character_list) > 1:
+        if len(character_list) >= 1:
             description = ''
             page = []
 

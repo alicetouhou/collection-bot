@@ -78,7 +78,7 @@ class CharacterParser(HTMLParser):
             self.favorites_list.append(m.groups()[0].replace(",",""))
 
 def get_top_anime_ids(amount, offset, type="anime"):
-    x = requests.get(f'https://api.myanimelist.net/v2/{type}/ranking?ranking_type=all&limit={amount}&offset={offset}', headers = HEADERS)
+    x = requests.get(f'https://api.myanimelist.net/v2/{type}/ranking?ranking_type=bypopularity&limit={amount}&offset={offset}', headers = HEADERS)
     anime_json = json.loads(x.text)
 
     output = []
@@ -105,7 +105,7 @@ def get_anime_characters(anime: Series, type="anime", game_override="",favorites
     parser.feed(anime_html.text)
     parser.close()
     parser.id_list = parser.id_list[:len(parser.id_list)-5]
-    print(f"Now Grabbing: {anime.id}")
+    print(f"Now Grabbing: {anime.id} - {anime.title}")
 
     for index,character_id in enumerate(parser.id_list):
         favorites = "0"
@@ -185,14 +185,14 @@ def main():
     #cursor.execute("DROP TABLE IF EXISTS CHARACTERS")
     cursor.execute("CREATE TABLE IF NOT EXISTS CHARACTERS(ID int, first_name varchar(255), last_name varchar(255), anime_list varchar(1027), pictures varchar(2055), value int, manga_list varchar(1027), games_list varchar(1027), PRIMARY KEY (ID))")
 
-    extras = [8557, 39071, 18897]
-    anime_list = get_series_by_ids(extras,type="anime")
-    #anime_list = get_top_anime_ids(25,656,type="anime")
+    #extras = [48651]
+    #anime_list = get_series_by_ids(extras,type="anime")
+    anime_list = get_top_anime_ids(31,569,type="anime")
     for anime in anime_list:
         characters = get_anime_characters(anime,type="anime")
         save_to_db(database, characters,type="anime")
 
-    # manga_list = []
+    # manga_list = [86918]
     # manga_list = get_series_by_ids(manga_list,type="manga")
     # for manga in manga_list:
     #     characters = get_anime_characters(manga,type="manga")

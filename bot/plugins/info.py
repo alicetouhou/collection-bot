@@ -15,7 +15,9 @@ class InfoCommand:
         rolls = get_rolls(ctx.guild.id, user.id)
         character_list = get_characters(ctx.guild.id, user.id)
         currency = get_currency(ctx.guild.id, user.id)
-        description = f'💛 Top character: **{character_list[0].first_name} {character_list[0].last_name}**\n📚List size: **{len(character_list)}**\n<:wishfragments:1148459769980530740> Wish Fragments: **{currency}**\n\n🥅 Claims available: **{claims}**\n🎲 Rolls available: **{rolls}**'
+        description = f'\n<:wishfragments:1148459769980530740> Wish Fragments: **{currency}**\n\n🥅 Claims available: **{claims}**\n🎲 Rolls available: **{rolls}**'
+        if character_list:
+            description = f'💛 Top character: **{character_list[0].first_name} {character_list[0].last_name}**\n📚List size: **{len(character_list)}**' + description
         embed = hikari.embeds.Embed(title=f"{user}'s Stats", color="f598df", description=description)
         if character_list:
             embed.set_thumbnail(character_list[0].images[0])
