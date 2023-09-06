@@ -65,7 +65,7 @@ class ListCommand:
             if character_list:
                 embed.set_thumbnail(character_list[0].images[0])
 
-            view = ScrollButtons(timeout=60, mctx=ctx, pages=page, embed=embed)
+            view = ScrollButtons(timeout=180, mctx=ctx, pages=page, embed=embed)
             await ctx.respond(embed, components=view)
             message = ctx.interaction.fetch_initial_response()
             await view.start(message)

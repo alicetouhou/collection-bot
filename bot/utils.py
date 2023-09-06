@@ -2,6 +2,7 @@ import crescent
 import hikari
 import psycopg2
 import bot.dbpool
+import csv
 
 from bot.model import Model
 from bot.character import Character
@@ -15,7 +16,7 @@ def add_player_to_db(guild: int, id: int):
 
 def pick_random_character() -> Character:
     with bot.dbpool.db_cursor() as cur:
-        cur.execute("""SELECT * FROM CHARACTERS
+        cur.execute("""SELECT * FROM characters
                         ORDER BY RANDOM()
                         LIMIT 1""")
         data = cur.fetchone()
@@ -56,7 +57,7 @@ def get_characters(guild: int, id: int) -> list[Character]:
         character_list = []
         for char_id in character_ids_list:
             if char_id != '':
-                cur.execute("""SELECT * FROM CHARACTERS WHERE ID = %(id)s""", {"id" : int(char_id)})
+                cur.execute("""SELECT * FROM characters WHERE ID = %(id)s""", {"id" : int(char_id)})
                 data = cur.fetchone()
                 character_list.append(Character(data))
         return character_list
@@ -97,7 +98,7 @@ def get_wishes(guild: int, id: int) -> list[Character]:
         character_list = []
         for char_id in character_ids_list:
             if char_id != '':
-                cur.execute("""SELECT * FROM CHARACTERS WHERE ID = %(id)s""", {"id" : int(char_id)})
+                cur.execute("""SELECT * FROM characters WHERE ID = %(id)s""", {"id" : int(char_id)})
                 data = cur.fetchone()
                 character_list.append(Character(data))
         return character_list
@@ -216,7 +217,7 @@ def search_characters(id: str or None, name: str or None, appearences: str or No
                 first_name = " ".join(names[0:len(names)-1])
                 last_name = names[len(names)-1]
 
-        sql = "SELECT * FROM CHARACTERS "
+        sql = "SELECT * FROM characters "
 
         if id: sql += "AND ID = %(id)s "
         if first_name: sql += "AND LOWER(first_name) = LOWER(%(first_name)s) "
@@ -253,3 +254,16 @@ def search_characters(id: str or None, name: str or None, appearences: str or No
             character_list.append(Character(char))
 
         return character_list
+    
+def add_characters_to_db() -> None:
+    with bot.dbpool.db_cursor() as cur:
+        f = open("bot\data\db.csv", "r")
+        lis = csv.reader(f, delimiter="|")
+        tup = [tuple(x) for x in lis]
+
+        cur.execute("DROP TABLE characters")
+        cur.execute("CREATE TABLE IF NOT EXISTS characters(ID int, first_name varchar(255), last_name varchar(255), anime_list varchar(1027), pictures varchar(2055), value int, manga_list varchar(1027), games_list varchar(1027), PRIMARY KEY (ID))")
+        for x in tup:
+            break
+        args_str = ','.join(cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s)", x).decode("utf-8") for x in tup)
+        cur.execute(f"INSERT INTO characters VALUES {args_str}") 

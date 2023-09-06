@@ -82,10 +82,10 @@ class RollCommand:
         for id in wishlist_people:
             wishlist_people_formatted += f"<@{id}> "
 
-        view = ClaimView(timeout=60, character=picked_character)
+        view = ClaimView(timeout=180, character=picked_character)
 
         if claimed:
-            view = FragmentView(timeout=60, character=picked_character)
+            view = FragmentView(timeout=180, character=picked_character)
 
         await ctx.respond(wishlist_people_formatted, embed=embed, components=view, user_mentions=wishlist_people)
         message = ctx.interaction.fetch_initial_response()

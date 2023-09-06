@@ -106,7 +106,7 @@ class ListCommand:
             embed = hikari.embeds.Embed(title=f"Search results", color="f598df", description=description)
             embed.set_footer(f"Page {1} of {len(page)}")
 
-            view = ScrollButtons(timeout=60, mctx=ctx, pages=page, embed=embed)
+            view = ScrollButtons(timeout=180, mctx=ctx, pages=page, embed=embed)
             await ctx.respond(embed, components=view)
             message = ctx.interaction.fetch_initial_response()
             await view.start(message)
@@ -144,7 +144,7 @@ class ListCommand:
             embed.add_field(name="Appears in:", value=animeography)
             embed.set_footer(f"Image {1} of {len(character.images)}")
 
-            view = ImageButtons(timeout=60, mctx=ctx, pages=character.images, embed=embed)
+            view = ImageButtons(timeout=180, mctx=ctx, pages=character.images, embed=embed)
             await ctx.respond(embed, components=view)
             message = ctx.interaction.fetch_initial_response()
             await view.start(message)
