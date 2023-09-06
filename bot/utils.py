@@ -257,7 +257,7 @@ def search_characters(id: str or None, name: str or None, appearences: str or No
     
 def add_characters_to_db() -> None:
     with bot.dbpool.db_cursor() as cur:
-        f = open("bot\data\db.csv", "r")
+        f = open("bot/data/db.csv", "r")
         lis = csv.reader(f, delimiter="|")
         tup = [tuple(x) for x in lis]
 
