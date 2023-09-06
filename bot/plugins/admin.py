@@ -1,9 +1,10 @@
 import os
-import crescent
-import hikari
-from bot.utils import add_characters_to_db, search_characters
 
-plugin = crescent.Plugin[hikari.GatewayBot, None]()
+import crescent
+
+from bot.utils import Plugin
+
+plugin = Plugin()
 
 admin_group = crescent.Group("admin")
 
@@ -17,5 +18,5 @@ admin_group = crescent.Group("admin")
 )
 async def populate(ctx: crescent.Context):
     await ctx.respond("`Running command to add characters....`")
-    add_characters_to_db()
+    await plugin.model.utils.add_characters_to_db()
     await ctx.respond("`Characters added!`")

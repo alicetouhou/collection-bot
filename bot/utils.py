@@ -1,269 +1,361 @@
+import csv
+import typing as t
+
 import crescent
 import hikari
-import psycopg2
-import bot.dbpool
-import csv
 
-from bot.model import Model
 from bot.character import Character
 
+if t.TYPE_CHECKING:
+    from bot.model import Model
+
+
 Plugin = crescent.Plugin[hikari.GatewayBot, Model]
-
-def add_player_to_db(guild: int, id: int):
-    guild_str = f"players_{guild}"
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"INSERT INTO {guild_str} VALUES (%(id)s,'',%(currency)s,3,0,10,0,'','') ON CONFLICT DO NOTHING", {"id": str(id), "currency": 0}) 
-
-def pick_random_character() -> Character:
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute("""SELECT * FROM characters
-                        ORDER BY RANDOM()
-                        LIMIT 1""")
-        data = cur.fetchone()
-        return Character(data)
-    
-def claim_character(guild: int, id: int, character: Character, prepend=False) -> None:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT characters FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        old_list = cur.fetchone()
-        if not old_list is None:
-            if prepend == False:
-                new_list = old_list[0] + "," + str(character.id)
-            else:
-                new_list = str(character.id) + "," + old_list[0]
-            cur.execute(f"UPDATE {guild_str} SET characters = %(newlist)s WHERE ID = %(id)s", {"id": str(id), "newlist" : new_list})
-
-def remove_character(guild: int, id: int, character: Character) -> None:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT characters FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        old_list = cur.fetchone()
-        if not old_list is None:
-            new_list = old_list[0].split(",")
-            new_list.remove(str(character.id))
-            new_list = ",".join(new_list)
-            cur.execute(f"UPDATE {guild_str} SET characters = %(newlist)s WHERE ID = %(id)s", {"id": str(id), "newlist" : new_list})
-
-def get_characters(guild: int, id: int) -> list[Character]:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT characters FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        character_str = cur.fetchone()[0]
-        character_ids_list = character_str.split(",")
-        character_list = []
-        for char_id in character_ids_list:
-            if char_id != '':
-                cur.execute("""SELECT * FROM characters WHERE ID = %(id)s""", {"id" : int(char_id)})
-                data = cur.fetchone()
-                character_list.append(Character(data))
-        return character_list
-    
-def reorder(guild: int, id: int, character: Character):
-    remove_character(guild, id, character)
-    claim_character(guild, id, character, prepend=True)
-
-def add_wish(guild: int, id: int, character: Character) -> None:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT wishlist FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        old_list = cur.fetchone()
-        if not old_list is None:
-            new_list = old_list[0] + "," + str(character.id)
-            cur.execute(f"UPDATE {guild_str} SET wishlist = %(newlist)s WHERE ID = %(id)s", {"id": str(id), "newlist" : new_list})
-
-def remove_wish(guild: int, id: int, character: Character) -> None:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT wishlist FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        old_list = cur.fetchone()
-        if not old_list is None:
-            new_list = old_list[0].split(",")
-            new_list.remove(str(character.id))
-            new_list = ",".join(new_list)
-            cur.execute(f"UPDATE {guild_str} SET wishlist = %(newlist)s WHERE ID = %(id)s", {"id": str(id), "newlist" : new_list})
-
-def get_wishes(guild: int, id: int) -> list[Character]:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT wishlist FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        character_str = cur.fetchone()[0]
-        character_ids_list = character_str.split(",")
-        character_list = []
-        for char_id in character_ids_list:
-            if char_id != '':
-                cur.execute("""SELECT * FROM characters WHERE ID = %(id)s""", {"id" : int(char_id)})
-                data = cur.fetchone()
-                character_list.append(Character(data))
-        return character_list
-    
-def get_users_who_wished(guild: int, character: Character) -> list[int]:
-    guild_str = f"players_{guild}"
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT id,wishlist FROM {guild_str}")
-        lists = cur.fetchall()
-        output = []
-        for i in lists:
-            id = i[0]
-            current_list = i[1].split(",")
-            if str(character.id) in current_list:
-                output.append(id)
-        return output
-    
-def is_claimed(guild: int, character: Character) -> bool:
-    guild_str = f"players_{guild}"
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT characters FROM {guild_str}")
-        lists = cur.fetchall()
-        list = []
-        for i in lists:
-            current_list = i[0].split(",")
-            list += current_list
-        return character in list
-
-def get_daily_claimed_time(guild: int, id: int) -> int:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT claimed_daily FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        return cur.fetchone()[0]
-    
-def set_daily_claimed_time(guild: int, id: int, time: int) -> None:
-        guild_str = f"players_{guild}"
-        add_player_to_db(guild, id)
-        with bot.dbpool.db_cursor() as cur:
-            cur.execute(f"UPDATE {guild_str} SET claimed_daily = %(time)s WHERE ID = %(id)s", {"id": str(id), "time" : time})
-
-def get_claims(guild: int, id: int) -> int:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT claims FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        return cur.fetchone()[0]
-    
-def add_claims(guild: int, id: int, number: int) -> None:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT claims FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        old_amount = cur.fetchone()
-        if not old_amount is None:
-            new_amount = old_amount[0] + number
-            cur.execute(f"UPDATE {guild_str} SET claims = %(amount)s WHERE ID = %(id)s", {"id": str(id), "amount" : new_amount})
-
-def get_daily_rolls_time(guild: int, id: int) -> int:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT claimed_rolls FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        return cur.fetchone()[0]
-    
-def set_daily_rolls_time(guild: int, id: int, time: int) -> None:
-        guild_str = f"players_{guild}"
-        add_player_to_db(guild, id)
-        with bot.dbpool.db_cursor() as cur:
-            cur.execute(f"UPDATE {guild_str} SET claimed_rolls = %(time)s WHERE ID = %(id)s", {"id": str(id), "time" : time})
-
-def get_rolls(guild: int, id: int) -> int:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT rolls FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        return cur.fetchone()[0]
-    
-def add_rolls(guild: int, id: int, number: int) -> None:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT rolls FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        old_amount = cur.fetchone()
-        if not old_amount is None:
-            new_amount = old_amount[0] + number
-            cur.execute(f"UPDATE {guild_str} SET rolls = %(amount)s WHERE ID = %(id)s", {"id": str(id), "amount" : new_amount})
-
-def get_currency(guild: int, id: int) -> int:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT currency FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        return cur.fetchone()[0]
-    
-def add_currency(guild: int, id: int, number: int) -> None:
-    guild_str = f"players_{guild}"
-    add_player_to_db(guild, id)
-    with bot.dbpool.db_cursor() as cur:
-        cur.execute(f"SELECT currency FROM {guild_str} WHERE ID = %(id)s", {"id": str(id)})
-        old_amount = cur.fetchone()
-        if not old_amount is None:
-            new_amount = old_amount[0] + number
-            cur.execute(f"UPDATE {guild_str} SET currency = %(amount)s WHERE ID = %(id)s", {"id": str(id), "amount" : new_amount})
+"""Type alias for the plugin type used by the bot."""
 
 
-def search_characters(id: str or None, name: str or None, appearences: str or None, limit: int=0, fuzzy: bool=False) -> list[Character]:
-    with bot.dbpool.db_cursor() as cur:
-        first_name = None
-        last_name = None
-        if name:
-            first_name = name
+class Utils:
+    """A class containing utility functions for the bot."""
+
+    def __init__(self, model: Model) -> None:
+        self.model = model
+
+    async def add_player_to_db(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int):
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.model.dbpool.execute(
+            f"INSERT INTO {guild_str} VALUES ($1,'',$2,3,0,10,0,'','') ON CONFLICT DO NOTHING",
+            guild_str,
+            str(id),
+            0,
+        )
+
+    async def pick_random_character(self) -> Character:
+        records = await self.model.dbpool.fetch(
+            "SELECT * FROM characters ORDER BY RANDOM() LIMIT 1",
+        )
+        return Character.from_record(records[0])
+
+    async def claim_character(
+        self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, character: Character, prepend=False
+    ) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT characters FROM {guild_str} WHERE ID = $1", str(id))
+            old_list = records[0]["characters"]
+            if old_list is not None:
+                if prepend is False:
+                    new_list = old_list + "," + str(character.id)
+                else:
+                    new_list = str(character.id) + "," + old_list
+                await conn.execute(
+                    "UPDATE $1 SET characters = $2 WHERE ID = $3",
+                    guild_str,
+                    new_list,
+                    id,
+                )
+
+    async def remove_character(
+        self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, character: Character
+    ) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT characters FROM {guild_str} WHERE ID = $1", str(id))
+            old_list = records[0]["characters"]
+            if old_list is not None:
+                new_list = old_list.split(",")
+                new_list.remove(str(character.id))
+                new_list = ",".join(new_list)
+                await conn.execute(
+                    f"UPDATE {guild_str} SET characters = $1 WHERE ID = $2",
+                    new_list,
+                    id,
+                )
+
+    async def get_characters(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int) -> list[Character]:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT characters FROM {guild_str} WHERE ID = $1", str(id))
+            character_str = records[0]["characters"]
+            character_ids_list = character_str.split(",")
+            character_list = []
+            for char_id in character_ids_list:
+                if char_id != "":
+                    records = await conn.fetch("SELECT * FROM characters WHERE ID = $1", int(char_id))
+                    character_list.append(Character.from_record(records[0]))
+            return character_list
+
+    async def reorder(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, character: Character):
+        await self.remove_character(guild, id, character)
+        await self.claim_character(guild, id, character, prepend=True)
+
+    async def add_wish(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, character: Character) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT wishlist FROM {guild_str} WHERE ID = $1", str(id))
+            old_list = records[0]["wishlist"]
+            if old_list is not None:
+                new_list = old_list + "," + str(character.id)
+                await conn.execute(
+                    f"UPDATE {guild_str} SET wishlist = $2 WHERE ID = $3",
+                    new_list,
+                    id,
+                )
+
+    async def remove_wish(
+        self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, character: Character
+    ) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT wishlist FROM {guild_str} WHERE ID = $1", str(id))
+            old_list = records[0]["wishlist"]
+            if old_list is not None:
+                new_list = old_list.split(",")
+                new_list.remove(str(character.id))
+                new_list = ",".join(new_list)
+                await conn.execute(
+                    f"UPDATE {guild_str} SET wishlist = $1 WHERE ID = $2",
+                    new_list,
+                    id,
+                )
+
+    async def get_wishes(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int) -> list[Character]:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT wishlist FROM {guild_str} WHERE ID = $1", str(id))
+            character_str = records[0]["wishlist"]
+            character_ids_list = character_str.split(",")
+            character_list = []
+            for char_id in character_ids_list:
+                if char_id != "":
+                    records = await conn.fetch("SELECT * FROM characters WHERE ID = $1", int(char_id))
+                    character_list.append(Character.from_record(records[0]))
+            return character_list
+
+    async def get_users_who_wished(
+        self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], character: Character
+    ) -> list[int]:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        records = await self.model.dbpool.fetch(f"SELECT id, wishlist FROM {guild_str}")
+        users = []
+        for record in records:
+            if str(character.id) in record["wishlist"]:
+                users.append(record["id"])
+        return users
+
+    async def is_claimed(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], character: Character) -> bool:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+
+        records = await self.model.dbpool.fetch(f"SELECT characters FROM {guild_str}")
+        for record in records:
+            if str(character.id) in record["characters"]:
+                return True
+        return False
+
+    async def get_daily_claimed_time(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int) -> int:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        records = await self.model.dbpool.fetch(f"SELECT claimed_daily FROM {guild_str} WHERE ID = $1", str(id))
+        return records[0]["claimed_daily"]
+
+    async def set_daily_claimed_time(
+        self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, time: int
+    ) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+        await self.model.dbpool.execute(
+            f"UPDATE {guild_str} SET claimed_daily = $2 WHERE ID = $3",
+            time,
+            id,
+        )
+
+    async def get_claims(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int) -> int:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+        records = await self.model.dbpool.fetch(f"SELECT claims FROM {guild_str} WHERE ID = $2", str(id))
+        return records[0]["claims"]
+
+    async def add_claims(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, number: int) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT claims FROM {guild_str} WHERE ID = $2", str(id))
+            old_amount = records[0]["claims"]
+            if old_amount is not None:
+                new_amount = old_amount + number
+                await conn.execute(
+                    f"UPDATE {guild_str} SET claims = $2 WHERE ID = $3",
+                    new_amount,
+                    id,
+                )
+
+    async def get_daily_rolls_time(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int) -> int:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        records = await self.model.dbpool.fetch(f"SELECT claimed_rolls FROM {guild_str} WHERE ID = $2", str(id))
+        return records[0]["claimed_rolls"]
+
+    async def set_daily_rolls_time(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, time: int) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        await self.model.dbpool.execute(
+            f"UPDATE {guild_str} SET claimed_rolls = $1 WHERE ID = $2",
+            time,
+            id,
+        )
+
+    async def get_rolls(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int) -> int:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        records = await self.model.dbpool.fetch(f"SELECT rolls FROM {guild_str} WHERE ID = $2", str(id))
+        return records[0]["rolls"]
+
+    async def add_rolls(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, number: int) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT rolls FROM {guild_str} WHERE ID = $2", str(id))
+            old_amount = records[0]["rolls"]
+            if old_amount is not None:
+                new_amount = old_amount + number
+                await conn.execute(
+                    f"UPDATE {guild_str} SET rolls = $2 WHERE ID = $3",
+                    new_amount,
+                    id,
+                )
+
+    async def get_currency(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int) -> int:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        records = await self.model.dbpool.fetch(f"SELECT currency FROM {guild_str} WHERE ID = $1", str(id))
+        return records[0]["currency"]
+
+    async def add_currency(self, guild: hikari.SnowflakeishOr[hikari.PartialGuild], id: int, number: int) -> None:
+        guild_str = f"players_{hikari.Snowflake(guild)}"
+        await self.add_player_to_db(guild, id)
+
+        async with self.model.dbpool.acquire() as conn:
+            records = await conn.fetch(f"SELECT currency FROM {guild_str} WHERE ID = $1", str(id))
+            old_amount = records[0]["currency"]
+            if old_amount is not None:
+                new_amount = old_amount + number
+                await conn.execute(
+                    f"UPDATE {guild_str} SET currency = $1 WHERE ID = $2",
+                    new_amount,
+                    id,
+                )
+
+    # TODO: Fix me
+    async def search_characters(
+        self,
+        id: int | None,
+        name: str | None,
+        appearances: str | None,
+        limit: int = 0,
+        fuzzy: bool = False,
+    ) -> list[Character]:
+        async with self.model.dbpool.acquire() as conn:
+            first_name = None
             last_name = None
-            names = name.split(" ")
-            if len(names) > 1:
-                first_name = " ".join(names[0:len(names)-1])
-                last_name = names[len(names)-1]
+            if name:
+                first_name = name
+                last_name = None
+                names = name.split(" ")
+                if len(names) > 1:
+                    first_name = " ".join(names[0 : len(names) - 1])
+                    last_name = names[len(names) - 1]
 
-        sql = "SELECT * FROM characters "
+            sql = "SELECT * FROM characters "
 
-        if id: sql += "AND ID = %(id)s "
-        if first_name: sql += "AND LOWER(first_name) = LOWER(%(first_name)s) "
-        if last_name: sql += "AND LOWER(last_name) = LOWER(%(last_name)s) "
+            if id:
+                sql += f"AND ID = {id} "
+            if first_name:
+                sql += f"AND LOWER(first_name) = LOWER({first_name}) "
+            if last_name:
+                sql += f"AND LOWER(last_name) = LOWER({last_name}) "
 
-        if fuzzy == True:
-            first_name = "%" + first_name + "%" if first_name else None
-            last_name = "%" + last_name + "%" if last_name else None
-            sql = sql[::-1].replace("=", "EKIL", 2)[::-1]
+            if fuzzy is True:
+                first_name = "%" + first_name + "%" if first_name else None
+                last_name = "%" + last_name + "%" if last_name else None
+                sql = sql[::-1].replace("=", "EKIL", 2)[::-1]
 
-        
-        if appearences: 
-            appearences = "%" + appearences + "%"
-            sql += "AND (LOWER(anime_list) LIKE LOWER(%(appearences)s) OR LOWER(manga_list) LIKE LOWER(%(appearences)s) OR LOWER(games_list) LIKE LOWER(%(appearences)s))"
-        sql += "ORDER BY first_name "
-        sql = sql.replace("AND", "WHERE", 1)
-        if limit > 0: sql += f"LIMIT {limit}"
+            if appearances:
+                appearances = "%" + appearances + "%"
+                sql += f"AND (LOWER(anime_list) LIKE LOWER({appearances}) OR LOWER(manga_list) LIKE LOWER({appearances}) OR LOWER(games_list) LIKE LOWER({appearances})"
+            sql += "ORDER BY first_name "
+            sql = sql.replace("AND", "WHERE", 1)
+            if limit > 0:
+                sql += f"LIMIT {limit}"
 
-        cur.execute(sql, {"id" : id, "first_name": first_name, "last_name": last_name, "appearences": appearences})
-        characters_a = cur.fetchall()
+            characters_a = await conn.fetch(sql)
 
-        characters_b = []
-        if first_name != None:
-            sql = sql.replace("first_name", "temp_name")
-            sql = sql.replace("last_name", "first_name")
-            sql = sql.replace("temp_name", "last_name")
-            cur.execute(sql, {"id" : id, "first_name": last_name, "last_name": first_name, "appearences": appearences})
-            characters_b = cur.fetchall()
+            characters_b = []
+            if first_name is not None:
+                sql = sql.replace("first_name", "temp_name")
+                sql = sql.replace("last_name", "first_name")
+                sql = sql.replace("temp_name", "last_name")
+                characters_b = await conn.fetch(
+                    sql,
+                    {
+                        "id": id,
+                        "first_name": last_name,
+                        "last_name": first_name,
+                        "appearences": appearances,
+                    },
+                )
 
-        character_list = []
-        for char in characters_a:
-            character_list.append(Character(char))
-        for char in characters_b:
-            character_list.append(Character(char))
+            character_list = []
+            for record in characters_a:
+                character_list.append(Character.from_record(record))
+            for record in characters_b:
+                character_list.append(Character.from_record(record))
 
-        return character_list
-    
-def add_characters_to_db() -> None:
-    with bot.dbpool.db_cursor() as cur:
-        f = open("bot/data/db.csv", "r")
-        lis = csv.reader(f, delimiter="|")
-        tup = [tuple(x) for x in lis]
+            return character_list
 
-        cur.execute("DROP TABLE IF EXISTS characters")
-        cur.execute("CREATE TABLE IF NOT EXISTS characters(ID int, first_name varchar(255), last_name varchar(255), anime_list varchar(1027), pictures varchar(2055), value int, manga_list varchar(1027), games_list varchar(1027), PRIMARY KEY (ID))")
-        for x in tup:
-            break
-        args_str = ','.join(cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s)", x).decode("utf-8") for x in tup)
-        cur.execute(f"INSERT INTO characters VALUES {args_str}") 
+    async def add_characters_to_db(self) -> None:
+        async with self.model.dbpool.acquire() as conn:
+            f = open("bot/data/db.csv", "r")
+            reader = csv.reader(f, delimiter="|")
+            tuples = [tuple(x) for x in reader]
+
+            await conn.execute("DROP TABLE IF EXISTS characters")
+            await conn.execute(
+                """CREATE TABLE characters
+                (   
+                    ID int, 
+                    first_name varchar(255), 
+                    last_name varchar(255), 
+                    anime_list varchar(1027), 
+                    pictures varchar(2055), 
+                    value int, 
+                    manga_list varchar(1027), 
+                    games_list varchar(1027), 
+                    PRIMARY KEY (ID)
+                )
+                """
+            )
+
+            await conn.executemany(
+                """
+                INSERT INTO characters 
+                (ID, first_name, last_name, anime_list, pictures, value, manga_list, games_list) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
+                tuples,
+            )

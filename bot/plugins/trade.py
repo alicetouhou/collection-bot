@@ -1,12 +1,15 @@
-import crescent
-import hikari
-from bot.character import Character
-from bot.utils import Plugin, get_characters, search_characters, claim_character, remove_character
+import asyncio
 import random
 import string
-import asyncio
 
-plugin = crescent.Plugin[hikari.GatewayBot, None]()
+import crescent
+import hikari
+
+from bot.character import Character
+from bot.utils import Plugin
+
+plugin = Plugin()
+
 
 class Trade:
     a: hikari.User
@@ -24,7 +27,9 @@ class Trade:
         self.a_list = []
         self.b_list = []
 
+
 current_trades: dict[str, Trade] = {}
+
 
 def character_list_str(list: list[Character], split="\n") -> str:
     output = ""
@@ -32,33 +37,49 @@ def character_list_str(list: list[Character], split="\n") -> str:
         output += f"`{character.id}` {character.first_name} {character.last_name}{split}"
     return output
 
-def get_trade_embed(ctx: crescent.Context, key: str) -> None:
+
+def get_trade_embed(ctx: crescent.Context, key: str) -> hikari.Embed:
     trade = current_trades[key]
 
-    embed = hikari.embeds.Embed(title=f"Trade", color="f598df", description="Add characters to trade with /tradeadd")
+    embed = hikari.Embed(
+        title="Trade",
+        color="f598df",
+        description="Add characters to trade with /tradeadd",
+    )
 
     breakline = "--------------------\n"
 
-    embed.add_field(name=f"{trade.a.username}", value=breakline + character_list_str(trade.a_list), inline=True)
-    embed.add_field(name=f"{trade.b.username}", value=breakline + character_list_str(trade.b_list), inline=True)
+    embed.add_field(
+        name=f"{trade.a.username}",
+        value=breakline + character_list_str(trade.a_list),
+        inline=True,
+    )
+    embed.add_field(
+        name=f"{trade.b.username}",
+        value=breakline + character_list_str(trade.b_list),
+        inline=True,
+    )
 
     return embed
 
+
 trade_group = crescent.Group("trade")
+
 
 @plugin.include
 @trade_group.child
-@crescent.command(name="begin", description="Start a trade with another player.")
+@crescent.command(name="begin", description="Start a trade with another player.", dm_enabled=False)
 class TradeCommand:
     member = crescent.option(hikari.User, "Enter a server member's @.", name="username")
+
     async def callback(self, ctx: crescent.Context) -> None:
         other_user = self.member
 
-        if (other_user.id == ctx.user.id):
+        if other_user.id == ctx.user.id:
             await ctx.respond("You cannot trade with yourself!")
             return
 
-        trade_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        trade_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
 
         current_trades[trade_id] = Trade(ctx.user, other_user)
 
@@ -70,25 +91,34 @@ class TradeCommand:
         except TimeoutError:
             if current_trades[trade_id]:
                 del current_trades[trade_id]
-                await ctx.respond(f"Timed out! {ctx.user.mention}'s and {other_user.mention}'s trade was not completed within 2 minutes.")
+                await ctx.respond(
+                    f"Timed out! {ctx.user.mention}'s and {other_user.mention}'s trade was not completed within 2 minutes."
+                )
+
 
 @plugin.include
 @trade_group.child
-@crescent.command(name="confirm", description="Confirm your trade. Trades cannot be modified once confirmed.")
+@crescent.command(
+    name="confirm",
+    description="Confirm your trade. Trades cannot be modified once confirmed.",
+)
 class TradeConfirmCommand:
     async def callback(self, ctx: crescent.Context) -> None:
+        assert ctx.guild_id is not None
+        utils = plugin.model.utils
+
         id_list = current_trades.keys()
         trade_id = ""
 
-        for trade in id_list:   
+        for trade in id_list:
             if current_trades[trade].a.id == ctx.user.id or current_trades[trade].b.id == ctx.user.id:
                 trade_id = trade
                 break
 
         if trade_id == "":
-            await ctx.respond(f"You are not currently in a trade!")
+            await ctx.respond("You are not currently in a trade!")
             return
-        
+
         current_trade = current_trades[trade_id]
 
         if ctx.user == current_trade.a:
@@ -98,22 +128,22 @@ class TradeConfirmCommand:
 
         await ctx.respond("Trade confirmed!")
 
-        if current_trade.a_confirmed == False or current_trade.b_confirmed == False:
+        if current_trade.a_confirmed is False or current_trade.b_confirmed is False:
             return
-        
+
         description = f"{character_list_str(current_trade.a_list,split=',')} traded from {current_trade.a.mention} to {current_trade.b.mention}\n{character_list_str(current_trade.b_list,split=',')} traded from {current_trade.b.mention} to {current_trade.a.mention}"
 
-        embed = hikari.embeds.Embed(title=f"Trade Complete!", color="f598df", description=description)
-        
+        embed = hikari.Embed(title="Trade Complete!", color="f598df", description=description)
+
         await ctx.respond(embed)
 
         for character in current_trade.a_list:
-            remove_character(guild=ctx.guild.id, id=current_trade.a.id, character=character)
-            claim_character(guild=ctx.guild.id, id=current_trade.b.id, character=character)
+            await utils.remove_character(guild=ctx.guild_id, id=current_trade.a.id, character=character)
+            await utils.claim_character(guild=ctx.guild_id, id=current_trade.b.id, character=character)
 
         for character in current_trade.b_list:
-            remove_character(guild=ctx.guild.id, id=current_trade.b.id, character=character)
-            claim_character(guild=ctx.guild.id, id=current_trade.a.id, character=character)
+            await utils.remove_character(guild=ctx.guild_id, id=current_trade.b.id, character=character)
+            await utils.claim_character(guild=ctx.guild_id, id=current_trade.a.id, character=character)
 
         del current_trades[trade_id]
 
@@ -121,72 +151,71 @@ class TradeConfirmCommand:
 @plugin.include
 @trade_group.child
 @crescent.command(name="cancel", description="Cancel your current trade.")
-class TradeConfirmCommand:
+class TradeCancelCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         id_list = current_trades.keys()
         trade_id = ""
 
-        for trade in id_list:   
+        for trade in id_list:
             if current_trades[trade].a.id == ctx.user.id or current_trades[trade].b.id == ctx.user.id:
                 trade_id = trade
                 break
 
         if trade_id == "":
-            await ctx.respond(f"You are not currently in a trade!")
+            await ctx.respond("You are not currently in a trade!")
             return
-        
-        current_trade = current_trades[trade_id]
 
         del current_trades[trade_id]
+
 
 @plugin.include
 @trade_group.child
 @crescent.command(name="add", description="Add a character to trade by ID.")
 class TradeAddCommand:
-    id = crescent.option(str, "Enter a character's ID.", name="id")
+    id = crescent.option(int, "Enter a character's ID.", name="id", min_value=1, max_value=2147483647)
+
     async def callback(self, ctx: crescent.Context) -> None:
-        self.id = int(self.id)
-        if self.id > 2147483647 or self.id < 1:
-            await ctx.respond(f"{self.id} is not a valid ID!")
-            return          
-        characters = get_characters(ctx.guild.id, ctx.user.id)
+        assert ctx.guild_id is not None
+        utils = plugin.model.utils
+
+        characters = await utils.get_characters(ctx.guild_id, ctx.user.id)
 
         included = False
         for character in characters:
             if self.id == character.id:
                 included = True
 
-        if included == False:     
-            inputted_char_id = search_characters(id=self.id, name=None, appearences=None)
+        if included is False:
+            inputted_char_id = await utils.search_characters(id=self.id, name=None, appearances=None)
             if len(inputted_char_id) == 0:
                 await ctx.respond(f"{self.id} is not a valid ID!")
                 return
             else:
                 name = f"{inputted_char_id[0].first_name} {inputted_char_id[0].last_name}"
                 await ctx.respond(f"{name} is not in your list!")
-                return    
+                return
 
         # Find trade id
 
         id_list = current_trades.keys()
         trade_id = ""
 
-        for trade in id_list:   
+        for trade in id_list:
             if current_trades[trade].a.id == ctx.user.id or current_trades[trade].b.id == ctx.user.id:
                 trade_id = trade
                 break
-        
+
         if trade_id == "":
-            await ctx.respond(f"You are not currently in a trade!")
-            return    
-        
+            await ctx.respond("You are not currently in a trade!")
+            return
+
         if ctx.user == current_trades[trade_id].a:
-            if current_trades[trade_id].a_confirmed == True:
+            if current_trades[trade_id].a_confirmed is True:
                 await ctx.respond("You already confirmed the trade. You can't add any more characters.")
                 return
             current_trades[trade_id].a_list.append(characters[0])
         else:
-            if current_trades[trade_id].b_confirmed == True:
+            if current_trades[trade_id].b_confirmed is True:
                 await ctx.respond("You already confirmed the trade. You can't add any more characters.")
                 return
             current_trades[trade_id].b_list.append(characters[0])
