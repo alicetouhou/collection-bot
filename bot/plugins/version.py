@@ -1,11 +1,14 @@
 import os
-import crescent
-import hikari
 
-plugin = crescent.Plugin[hikari.GatewayBot, None]()
+import crescent
+
+from bot.utils import Plugin
+
+plugin = Plugin()
+
 
 @plugin.include
 @crescent.command
 async def version(ctx: crescent.Context):
-    version = os.environ.get('version', 'Not in production')
+    version = os.environ.get("version", "Not in production")
     await ctx.respond(f"`{version}`")

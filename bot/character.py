@@ -1,43 +1,53 @@
+from __future__ import annotations
+
 import math
+import typing as t
+
+import asyncpg
+
 
 class Character:
-    first_name = ""
-    last_name = ""
-    anime = ""
-    manga = ""
-    game = ""
-    images = []
-    favorites = 0
-    value = 0
-
-    def __init__(self, first_name=first_name, last_name=last_name, anime=anime, images=images, id=id, favorites=favorites, manga=manga, game=game):
+    def __init__(
+        self,
+        images: list[str],
+        games: list[str],
+        id: int,
+        first_name: str = "",
+        last_name: str = "",
+        anime: str = "",
+        favorites: int = 0,
+        manga: str = "",
+    ) -> None:
         self.first_name = first_name
         self.last_name = last_name
         self.anime = anime
         self.manga = manga
-        self.game = game
+        self.games = games
         self.images = images
         self.id = id
         self.favorites = favorites
         self.value = self.get_value()
 
-    def __init__(self, data: tuple):
-        self.first_name = data[1]
-        self.last_name = data[2]
-        self.anime = data[3].split(",") if data[3] else []
-        self.manga = data[6].split(",") if data[6] else []
-        self.games = data[7].split(",") if data[7] else []
-        self.images = data[4].split(",")
-        self.id = data[0]
-        self.value = data[5]
+    @classmethod
+    def from_record(cls, data: asyncpg.Record) -> t.Self:
+        return cls(
+            data[1],
+            data[2],
+            data[3].split(","),
+            data[4].split(","),
+            data[0],
+            data[5],
+            data[6].split(","),
+            data[7].split(","),
+        )
 
     def __str__(self):
-        return f'ID: {self.id}, First name: {self.first_name}, Last name: {self.last_name}, Anime: {self.anime}, Value: {self.value}, Images: {len(self.images)}'
-    
+        return f"ID: {self.id}, First name: {self.first_name}, Last name: {self.last_name}, Anime: {self.anime}, Value: {self.value}, Images: {len(self.images)}"
+
     def get_value(self) -> int:
         if int(self.favorites) > 0:
-            return max(math.floor(200 * math.log(int(self.favorites), 10) - 100),15)
+            return max(math.floor(200 * math.log(int(self.favorites), 10) - 100), 15)
         return 10
-    
+
     def get_images_str(self) -> str:
         return ",".join(self.images)

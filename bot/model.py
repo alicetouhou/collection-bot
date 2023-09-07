@@ -1,39 +1,62 @@
+import logging
+import os
+import typing as t
+
+import asyncpg
 import hikari
-import bot
+
+from bot.utils import Utils
+
+logger = logging.getLogger(__name__)
+
 
 class Model:
-    guilds = []
+    def __init__(self, bot: hikari.GatewayBot) -> None:
+        self.guilds: list[hikari.Snowflake] = []
+        self.dbpool = asyncpg.create_pool(
+            dsn=f"postgresql://{os.environ['DATABASE_USER']}:{os.environ['DATABASE_PASSWORD']}@{os.environ['DATABASE_HOST']}:{os.environ['DATABASE_PORT']}",
+        )
+        self.bot = bot
+        self.utils = Utils(self)
+
+        bot.subscribe(hikari.StartingEvent, self.on_starting)
+        bot.subscribe(hikari.StoppedEvent, self.on_stop)
+        bot.subscribe(hikari.ShardReadyEvent, self.reset_guild_counter)
+        bot.subscribe(hikari.GuildJoinEvent, self.increment_guild_counter)
+        bot.subscribe(hikari.GuildLeaveEvent, self.decrement_guild_counter)
 
     async def reset_guild_counter(self, event: hikari.ShardReadyEvent) -> None:
-        self.guilds = event.unavailable_guilds
-        self.ensure_dbs_exist()
-
+        self.guilds = t.cast(list, event.unavailable_guilds)
+        await self.create_schema()
 
     async def increment_guild_counter(self, event: hikari.GuildJoinEvent) -> None:
-        self.guild.append(event.guild_id)
-        self.ensure_dbs_exist()
-
+        self.guilds.append(event.guild_id)
+        await self.create_schema()
 
     async def decrement_guild_counter(self, event: hikari.GuildLeaveEvent) -> None:
-        self.guild.remove(event.guild_id)
+        self.guilds.remove(event.guild_id)
 
-    def __init__(self) -> None:
-        ...
+    async def create_schema(self) -> None:
+        """
+        Create the initial database schema.
+        """
+        guilds = self.guilds
+        logger.info(f"Current guilds: {guilds}")
 
-    def ensure_dbs_exist(self):
-        servers = self.guilds
-        print(f"Current guilds: {servers}")
-        with bot.dbpool.db_cursor() as cur:
-                cur.execute("CREATE TABLE IF NOT EXISTS servers (ID varchar(31), PRIMARY KEY (ID))")
-                for server in servers:
-                    cur.execute(
-                        f"CREATE TABLE IF NOT EXISTS players_{str(server)} (ID varchar(31), characters varchar(65535), currency int, claims int, claimed_daily int, rolls int, claimed_rolls int, wishlist varchar(1027), upgrades varchar(2055), PRIMARY KEY (ID))"
-                    )
-                    cur.execute(
-                        f"INSERT INTO servers VALUES ({str(server)}) ON CONFLICT DO NOTHING"
-                    )
+        async with self.dbpool.acquire() as conn:
+            await conn.execute("CREATE TABLE IF NOT EXISTS servers (ID varchar(31), PRIMARY KEY (ID))")
 
-    async def on_start(self, _: hikari.StartedEvent) -> None:
+            for guild_id in guilds:
+                await conn.execute(
+                    f"CREATE TABLE IF NOT EXISTS players_{guild_id} (ID varchar(31), characters varchar(65535), currency int, claims int, claimed_daily int, rolls int, claimed_rolls int, wishlist varchar(1027), upgrades varchar(2055), PRIMARY KEY (ID))"
+                )
+                await conn.execute(f"INSERT INTO servers VALUES ({guild_id}) ON CONFLICT DO NOTHING")
+
+    async def on_starting(self, _: hikari.StartingEvent) -> None:
+        """
+        This function is called when your bot is starting up. This is a good place
+        to put initialization functions for the model class.
+        """
         ...
 
     async def on_stop(self, _: hikari.StoppedEvent) -> None:
@@ -41,4 +64,4 @@ class Model:
         This function is called when your bot stops. This is a good place to put
         cleanup functions for the model class.
         """
-        ...
+        await self.dbpool.close()
