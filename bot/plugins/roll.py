@@ -17,6 +17,8 @@ class ClaimView(miru.View):
 
     @miru.button(label="Claim!", emoji="❗", style=hikari.ButtonStyle.PRIMARY)
     async def claim_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
+        self.stop()
+        await self.on_timeout()
         user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
 
         claims = await user.claims
@@ -30,9 +32,6 @@ class ClaimView(miru.View):
         await ctx.respond(
             f"**{ctx.user.mention}** claimed **{self.character.first_name} {self.character.last_name}**!\nRemaining claims: **{claims-1}**"
         )
-        self.stop()
-        await self.on_timeout()
-
     async def on_timeout(self) -> None:
         for item in self.children:
             item.disabled = True
@@ -53,15 +52,14 @@ class FragmentView(miru.View):
         style=hikari.ButtonStyle.PRIMARY,
     )
     async def claim_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        assert ctx.guild_id is not None
         self.stop()
+        await self.on_timeout()
         user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
         currency = await user.currency
         user.set_currency(currency + self.character.value)
         await ctx.respond(
             f"**{ctx.user.mention}** obtained **{self.character.value}**<:wishfragments:1148459769980530740>"
         )
-        await self.on_timeout()
 
     async def on_timeout(self) -> None:
         for item in self.children:
