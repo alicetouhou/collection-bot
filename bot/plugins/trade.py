@@ -149,8 +149,8 @@ class TradeConfirmCommand:
             await user_b.append_to_characters(character)
 
         for character in current_trade.b_list:
-            await utils.remove_character(guild=ctx.guild_id, id=current_trade.b.id, character=character)
-            await utils.claim_character(guild=ctx.guild_id, id=current_trade.a.id, character=character)
+            await user_b.remove_from_characters(character)
+            await user_a.append_to_characters(character)
 
         del current_trades[trade_id]
 
