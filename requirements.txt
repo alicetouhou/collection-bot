@@ -3,3 +3,4 @@ hikari-crescent
 python-dotenv
 hikari-miru
 psycopg2-binary
+asyncpg

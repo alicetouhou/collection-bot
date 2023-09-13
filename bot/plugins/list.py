@@ -1,9 +1,10 @@
 import crescent
 import hikari
 import miru
+from miru.ext import nav
 
 from bot.character import Character
-from bot.utils import Plugin
+from bot.model import Plugin
 
 plugin = Plugin()
 
@@ -55,24 +56,28 @@ class ListCommand:
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
-        user = ctx.user if self.member is None else self.member
-        character_list = await plugin.model.utils.get_characters(ctx.guild_id, user.id)
-        if len(character_list) > 1:
-            description = ""
-            page = []
+        dbsearch = plugin.model.dbsearch
+        user = await dbsearch.create_user(ctx, ctx.user if self.member is None else self.member)
+        character_list = [await dbsearch.create_character_from_id(ctx, x) for x in await user.characters]
+
+        if len(character_list) >= 1:
+            header = ""
+            pages = []
 
             count = 0
             while count < len(character_list):
-                page.append(character_list[count : 20 + count])
+                characters_on_page = character_list[count : 20 + count]
+
+                description = header
+
+                for character in characters_on_page:
+                    description += f"`{'0' * (6 - len(str(character.character.id)))}{character.character.id}` **{character.character.first_name} {character.character.last_name}** • <:wishfragments:1148459769980530740> {character.character.value}\n"
+
+                embed = hikari.Embed(title=f"{user.name}'s Characters", color="f598df", description=description)
+                embed.set_thumbnail(character_list[0].character.images[0])
+
+                pages.append(embed)
                 count += 20
 
-            for character in page[0]:
-                description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` **{character.first_name} {character.last_name}** • <:wishfragments:1148459769980530740> {character.value}\n"
-            embed = hikari.Embed(title=f"{user}'s Characters", color="f598df", description=description)
-            embed.set_footer(f"Page {1} of {len(page)}")
-            if character_list:
-                embed.set_thumbnail(character_list[0].images[0])
-
-            view = ScrollButtons(timeout=180, mctx=ctx, pages=page, embed=embed)
-            resp = await ctx.respond(embed, components=view)
-            await view.start(resp)
+            navigator = nav.NavigatorView(pages=pages)
+            await navigator.send(ctx.interaction)

@@ -1,13 +1,13 @@
 import crescent
 import hikari
 
-from bot.utils import Plugin
+from bot.model import Plugin
 
 plugin = Plugin()
 
 
 @plugin.include
-@crescent.command(name="playerinfo", description="Show your statistics.", dm_enabled=False)
+@crescent.command(name="playerinfo", description="Show your statistics.")
 class InfoCommand:
     member = crescent.option(
         hikari.User,
@@ -18,17 +18,20 @@ class InfoCommand:
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
-        utils = plugin.model.utils
+        dbsearch = plugin.model.dbsearch
 
-        user = ctx.user if self.member is None else self.member
-        claims = await utils.get_claims(ctx.guild.id, user.id)
-        rolls = await utils.get_rolls(ctx.guild.id, user.id)
-        character_list = await utils.get_characters(ctx.guild.id, user.id)
-        currency = await utils.get_currency(ctx.guild.id, user.id)
+        user = await dbsearch.create_user(ctx, ctx.user if self.member is None else self.member)
+
+        claims = await user.claims
+        rolls = await user.rolls
+        character_list = await user.characters
+        currency = await user.currency
+
         description = f'\n<:wishfragments:1148459769980530740> Wish Fragments: **{currency}**\n\n🥅 Claims available: **{claims}**\n🎲 Rolls available: **{rolls}**'
         if character_list:
-            description = f'💛 Top character: **{character_list[0].first_name} {character_list[0].last_name}**\n📚List size: **{len(character_list)}**' + description
-        embed = hikari.embeds.Embed(title=f"{user}'s Stats", color="f598df", description=description)
+            character = (await dbsearch.create_character_from_id(ctx, character_list[0])).character
+            description = f'💛 Top character: **{character.first_name} {character.last_name}**\n📚 List size: **{len(character_list)}**' + description
+        embed = hikari.embeds.Embed(title=f"{user.name}'s Stats", color="f598df", description=description)
         if character_list:
-            embed.set_thumbnail(character_list[0].images[0])
+            embed.set_thumbnail(character.images[0])
         await ctx.respond(embed)

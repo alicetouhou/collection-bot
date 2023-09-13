@@ -6,10 +6,12 @@ from html.parser import HTMLParser
 
 import psycopg2
 import requests
+import dotenv
+import os
 
-f = open("token.json")
-data = json.load(f)
-token = data["access_token"]
+dotenv.load_dotenv()
+
+token = os.environ["MAL_ACCESS_TOKEN"]
 HEADERS = {"Authorization": f"Bearer {token}"}
 
 
@@ -129,7 +131,7 @@ def get_anime_characters(anime: Series, type="anime", game_override="", favorite
         else:
             favorites = "0"
 
-        if favorites != "0":
+        if favorites != 0:
             favorites = int(favorites) * favorites_scale
             try:
                 char_request = requests.get(
@@ -254,7 +256,7 @@ def save_to_db(database, character_list: list[Character], type="anime") -> None:
             )
 
     outputquery = "COPY ({0}) TO STDOUT WITH DELIMITER '|' CSV HEADER".format("SELECT * FROM CHARACTERS")
-    with open("bot\data\db.csv", "w", encoding="utf-8") as f:
+    with open(os.environ["FILE_PATH"], "w", encoding="utf-8") as f:
         cursor.copy_expert(outputquery, f)
 
     database.commit()
@@ -266,7 +268,7 @@ def main():
         database="characters",
         host="localhost",
         user="postgres",
-        password="",
+        password=os.environ["DATABASE_PASSWORD"],
         port="5432",
     )
 
@@ -278,17 +280,17 @@ def main():
     )
 
     extras = [8557, 39071, 18897]
-    anime_list = get_series_by_ids(extras, type="anime")
+    #anime_list = get_series_by_ids(extras, type="anime")
     # anime_list = get_top_anime_ids(25,656,type="anime")
-    for anime in anime_list:
-        characters = get_anime_characters(anime, type="anime")
-        save_to_db(database, characters, type="anime")
+    # for anime in anime_list:
+    #     characters = get_anime_characters(anime, type="anime")
+    #     save_to_db(database, characters, type="anime")
 
-    # manga_list = [86918]
-    # manga_list = get_series_by_ids(manga_list,type="manga")
-    # for manga in manga_list:
-    #     characters = get_anime_characters(manga,type="manga")
-    #     save_to_db(database, characters,type="manga")
+    manga_list = [100035]
+    manga_list = get_series_by_ids(manga_list, type="manga")
+    for manga in manga_list:
+        characters = get_anime_characters(manga,type="manga")
+        save_to_db(database, characters,type="manga")
 
     # games_list_a = [51105]
     # games_list_m = []

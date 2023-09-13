@@ -7,7 +7,9 @@ import miru
 
 from bot.model import Model
 
-dotenv.load_dotenv()
+dotenv.load_dotenv(override=True)
+
+print(os.environ["TOKEN"])
 
 bot = hikari.GatewayBot(os.environ["TOKEN"])
 miru.install(bot)

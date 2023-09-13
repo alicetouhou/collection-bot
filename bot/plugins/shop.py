@@ -1,7 +1,7 @@
 import crescent
 import hikari
 
-from bot.utils import Plugin
+from bot.model import Plugin
 
 plugin = Plugin()
 
@@ -10,11 +10,11 @@ shop_group = crescent.Group("shop")
 
 @shop_group.child
 @plugin.include
-@crescent.command(name="view", description="View the shop.", dm_enabled=False)
+@crescent.command(name="view", description="View the shop.")
 class ViewCommand:
     async def callback(self, ctx: crescent.Context) -> None:
-        description = "🎲 Buy a roll: **500<:wishfragments:1148459769980530740>** • `/shop buy roll`\n"
-        description += "🥅 Buy a claim: **2,000<:wishfragments:1148459769980530740>** • `/shop buy claim`\n"
+        description = "🎲 Buy a roll: **250<:wishfragments:1148459769980530740>** • `/shop buy roll`\n"
+        description += "🥅 Buy a claim: **900<:wishfragments:1148459769980530740>** • `/shop buy claim`\n"
         description += "\n\n*More items coming soon!*"
         embed = hikari.Embed(title="⛩️ Suzunaan Store", color="f598df", description=description)
         await ctx.respond(embed)
@@ -28,35 +28,37 @@ async def autocomplete_response(
         ("roll", "roll"),
     ]
 
-
+"""Todo: fix shop buy"""
 @shop_group.child
 @plugin.include
-@crescent.command(name="buy", description="Buy an item.", dm_enabled=False)
+@crescent.command(name="buy", description="Buy an item.")
 class BuyCommand:
     item = crescent.option(str, "Select an item to purchase.", name="item")
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
-        utils = plugin.model.utils
+        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
 
         if self.item not in ["roll", "claim"]:
             await ctx.respond(f"**{self.item}** is not a valid item!")
 
-        currency = await utils.get_currency(ctx.guild_id, ctx.user.id)
+        currency = await user.currency
 
-        if self.item == "roll" and currency >= 500:
-            await utils.add_currency(ctx.guild_id, ctx.user.id, -500)
-            await utils.add_rolls(ctx.guild_id, ctx.user.id, 1)
+        if self.item == "roll" and currency >= 250:
+            await user.set_currency(currency - 250)
+            rolls = await user.rolls
+            await user.set_rolls(rolls + 1)
             await ctx.respond(
-                f"You purchased a **roll**!\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{currency-500}**"
+                f"You purchased a **roll**!\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{currency-250}**"
             )
             return
 
-        elif self.item == "claim" and currency >= 2000:
-            await utils.add_currency(ctx.guild_id, ctx.user.id, -2000)
-            await utils.add_claims(ctx.guild_id, ctx.user.id, 1)
+        elif self.item == "claim" and currency >= 900:
+            await user.set_currency(currency - 900)
+            claims = await user.claims
+            await user.set_claims(claims + 1)
             await ctx.respond(
-                f"You purchased a **claim**!\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{currency-2000}**"
+                f"You purchased a **claim**!\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{currency-900}**"
             )
             return
 

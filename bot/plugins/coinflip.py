@@ -2,7 +2,7 @@ import random
 
 import crescent
 
-from bot.utils import Plugin
+from bot.model import Plugin
 
 plugin = Plugin()
 
@@ -11,7 +11,6 @@ plugin = Plugin()
 @crescent.command(
     name="coinflip",
     description="Wager an amount. If the coin flips heads, your wager doubles.",
-    dm_enabled=False,
 )
 class InfoCommand:
     wager = crescent.option(

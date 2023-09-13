@@ -3,7 +3,7 @@ import hikari
 import miru
 
 from bot.character import Character
-from bot.utils import Plugin
+from bot.model import Plugin
 
 plugin = Plugin()
 
@@ -17,21 +17,27 @@ class ClaimView(miru.View):
 
     @miru.button(label="Claim!", emoji="❗", style=hikari.ButtonStyle.PRIMARY)
     async def claim_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        assert ctx.guild_id is not None
-        utils = plugin.model.utils
+        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
 
-        claims = await utils.get_claims(ctx.guild_id, ctx.user.id)
+        claims = await user.claims
         if claims <= 0:
             await ctx.respond(
                 f"**{ctx.user.mention}** attempted to claim, but has **0** claims left!\nUse **/daily** to get more, or buy them with /shop."
             )
             return
-        await utils.claim_character(ctx.guild_id, ctx.user.id, self.character)
-        await utils.add_claims(ctx.guild_id, ctx.user.id, -1)
+        await user.append_to_characters(self.character)
+        await user.set_claims(claims -1)
         await ctx.respond(
             f"**{ctx.user.mention}** claimed **{self.character.first_name} {self.character.last_name}**!\nRemaining claims: **{claims-1}**"
         )
         self.stop()
+        await self.on_timeout()
+
+    async def on_timeout(self) -> None:
+        for item in self.children:
+            item.disabled = True
+        await self.message.edit(components=self)
+
 
 
 class FragmentView(miru.View):
@@ -49,10 +55,18 @@ class FragmentView(miru.View):
     async def claim_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
         assert ctx.guild_id is not None
         self.stop()
-        await plugin.model.utils.add_currency(ctx.guild_id, ctx.user.id, self.character.value)
+        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
+        currency = await user.currency
+        user.set_currency(currency + self.character.value)
         await ctx.respond(
             f"**{ctx.user.mention}** obtained **{self.character.value}**<:wishfragments:1148459769980530740>"
         )
+        await self.on_timeout()
+
+    async def on_timeout(self) -> None:
+        for item in self.children:
+            item.disabled = True
+        await self.message.edit(components=self)
 
 
 @plugin.include
@@ -60,51 +74,30 @@ class FragmentView(miru.View):
 class RollCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
-        utils = plugin.model.utils
+        dbsearch = plugin.model.dbsearch
 
-        rolls = await utils.get_rolls(ctx.guild_id, ctx.user.id)
+        user = await dbsearch.create_user(ctx, ctx.user)
+
+        rolls = await user.rolls
         if rolls <= 0:
             await ctx.respond("You have no rolls left! Use **/getrolls** to claim more.")
             return
-        picked_character = await utils.pick_random_character()
-        claimed = utils.is_claimed(ctx.guild_id, picked_character)
+        picked_character = await dbsearch.create_random_character(ctx)
+        claimed = (await picked_character.get_claimed_id()) > 0
 
-        name = picked_character.first_name + " " + picked_character.last_name
-        description = f"ID `{picked_character.id}` • {picked_character.value}<:wishfragments:1148459769980530740>"
-        embed = hikari.Embed(title=name, color="f598df", description=description)
-        embed.set_image(picked_character.images[0])
-        embed.set_image(picked_character.images[0])
-
-        anime_list = sorted(picked_character.anime)
-        manga_list = sorted(picked_character.manga)
-        games_list = sorted(picked_character.games)
-        animeography = ""
-        count = 0
-        for manga in manga_list:
-            animeography += f"📖 {manga}\n" if manga != "" and count < 4 else ""
-            count += 1
-        for anime in anime_list:
-            animeography += f"🎬 {anime}\n" if anime != "" and count < 4 else ""
-            count += 1
-        for game in games_list:
-            animeography += f"🎮 {game}\n" if game != "" and count < 4 else ""
-            count += 1
-        if count >= 4:
-            animeography += f"*and {count-4} more..*"
-
-        embed.add_field(name="Appears in:", value=animeography)
-        embed.set_footer(f"{rolls-1} rolls remaining")
-
-        wishlist_people = await utils.get_users_who_wished(ctx.guild_id, picked_character)
+        wishlist_people = await picked_character.get_wished_ids()
 
         wishlist_people_formatted = ""
         for id in wishlist_people:
             wishlist_people_formatted += f"<@{id}> "
 
-        view: miru.View = ClaimView(timeout=180, character=picked_character)
+        view: miru.View = ClaimView(timeout=180, character=picked_character.character)
 
         if claimed:
-            view = FragmentView(timeout=180, character=picked_character)
+            view = FragmentView(timeout=180, character=picked_character.character)
+
+        embed = picked_character.character.get_claimable_embed()
+        embed.set_footer(f"{rolls - 1} roll{'s' if rolls != 2 else ''} remaining")
 
         await ctx.respond(
             wishlist_people_formatted,
@@ -115,4 +108,4 @@ class RollCommand:
         message = ctx.interaction.fetch_initial_response()
         await view.start(message)
 
-        await utils.add_rolls(ctx.guild_id, ctx.user.id, -1)
+        await user.set_rolls(rolls - 1)

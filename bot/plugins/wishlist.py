@@ -3,7 +3,7 @@ import math
 import crescent
 import hikari
 
-from bot.utils import Plugin
+from bot.model import Plugin
 
 plugin = Plugin()
 
@@ -22,15 +22,18 @@ class WishListCommand:
     )
 
     async def callback(self, ctx: crescent.Context) -> None:
-        assert ctx.guild_id is not None
-        utils = plugin.model.utils
+        dbsearch = plugin.model.dbsearch
 
-        user = ctx.user if self.member is None else self.member
-        character_list = await utils.get_wishes(ctx.guild_id, user.id)
+        user = await dbsearch.create_user(ctx, ctx.user if self.member is None else self.member)
+
+        wishlist = await user.wishlist
+
+        character_list = [(await dbsearch.create_character_from_id(ctx, x)).character for x in wishlist]
+
         description = ""
         for character in character_list:
             description += f"`{'0' * (6 - int(math.log(character.id, 10) + 1))}{character.id}` {character.first_name} {character.last_name}\n"
-        embed = hikari.Embed(title=f"{user}'s Characters", color="f598df", description=description)
+        embed = hikari.Embed(title=f"{user.name}'s Characters", color="f598df", description=description)
         embed.set_footer(f"{len(character_list)}/7 slots full")
         await ctx.respond(embed)
 
@@ -42,27 +45,27 @@ class WishAddCommand:
     id = crescent.option(int, "Enter a character's ID.", name="id", min_value=1, max_value=2147483647)
 
     async def callback(self, ctx: crescent.Context) -> None:
-        assert ctx.guild_id is not None
-        utils = plugin.model.utils
+        dbsearch = plugin.model.dbsearch
+        user = await dbsearch.create_user(ctx, ctx.user)
+        selected_character = await dbsearch.create_character_from_id(ctx, self.id)
 
-        inputted_char_id = await utils.search_characters(id=self.id, name=None, appearances=None)
-        if len(inputted_char_id) == 0:
+        user_character_ids = await user.wishlist
+
+        if not selected_character:
             await ctx.respond(f"{self.id} is not a valid ID!")
-            return
+            return None
 
-        wishes = await utils.get_wishes(ctx.guild_id, ctx.user.id)
-        character = inputted_char_id[0]
-        wish_ids = [character.id for character in wishes]
+        character = selected_character.character
 
-        if character.id in wish_ids:
+        if self.id in user_character_ids:
             await ctx.respond(f"**{character.first_name} {character.last_name}** is already in your wishlist.")
-            return
+            return None
 
-        if len(wishes) >= 7:
+        if len(user_character_ids) >= 7:
             await ctx.respond("You can not add more than 7 characters to your wishlist.")
             return
 
-        await utils.add_wish(ctx.guild_id, ctx.user.id, character)
+        await user.append_to_wishlist(character)
 
         await ctx.respond(f"**{character.first_name} {character.last_name}** has been added to your wishlist.")
 
@@ -74,21 +77,22 @@ class WishRemoveCommand:
     id = crescent.option(int, "Enter a character's ID.", name="id", min_value=1, max_value=2147483647)
 
     async def callback(self, ctx: crescent.Context) -> None:
-        assert ctx.guild_id is not None
-        utils = plugin.model.utils
+        dbsearch = plugin.model.dbsearch
+        user = await dbsearch.create_user(ctx, ctx.user)
+        selected_character = await dbsearch.create_character_from_id(ctx, self.id)
 
-        inputted_char_id = await utils.search_characters(id=self.id, name=None, appearances=None)
-        if len(inputted_char_id) == 0:
+        user_character_ids = await user.wishlist
+
+        if not selected_character:
             await ctx.respond(f"{self.id} is not a valid ID!")
-            return
+            return None
 
-        wishes = await utils.get_wishes(ctx.guild_id, ctx.user.id)
-        character = inputted_char_id[0]
-        wish_ids = [character.id for character in wishes]
+        character = selected_character.character
 
-        if character.id not in wish_ids:
+        if self.id not in user_character_ids:
             await ctx.respond(f"**{character.first_name} {character.last_name}** is not in your wishlist.")
-            return
+            return None
 
-        await utils.remove_wish(ctx.guild_id, ctx.user.id, character)
+        await user.remove_from_wishlist(character)
+
         await ctx.respond(f"**{character.first_name} {character.last_name}** has been removed from your wishlist.")

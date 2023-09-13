@@ -1,76 +1,12 @@
 import crescent
 import hikari
 import miru
+from miru.ext import nav
 
 from bot.character import Character
-from bot.utils import Plugin
+from bot.model import Plugin
 
 plugin = Plugin()
-
-
-class ScrollButtons(miru.View):
-    mctx: crescent.Context
-    page_number: int = 0
-    pages: list[list[Character]]
-    embed: hikari.Embed
-
-    def __init__(self, **kwargs):
-        super().__init__(timeout=kwargs["timeout"])
-        self.mctx = kwargs["mctx"]
-        self.pages = kwargs["pages"]
-        self.embed = kwargs["embed"]
-
-    def get_description(self) -> str:
-        description = "Multiple characters fit your query. Please narrow your search or search by ID.\n\n"
-        for character in self.pages[self.page_number]:
-            description += (
-                f"`{'0' * (6 - len(str(character.id)))}{character.id}` {character.first_name} {character.last_name}\n"
-            )
-        return description
-
-    @miru.button(label="", emoji="⬅️", style=hikari.ButtonStyle.SECONDARY)
-    async def left_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        self.page_number = (self.page_number - 1) % len(self.pages)
-        new_description = self.get_description()
-        self.embed.description = new_description
-        self.embed.set_footer(f"Page {self.page_number+1} of {len(self.pages)}")
-        await self.mctx.edit(self.embed)
-
-    @miru.button(label="", emoji="➡️", style=hikari.ButtonStyle.SECONDARY)
-    async def right_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        self.page_number = (self.page_number + 1) % len(self.pages)
-        new_description = self.get_description()
-        self.embed.description = new_description
-        self.embed.set_footer(f"Page {self.page_number+1} of {len(self.pages)}")
-        await self.mctx.edit(self.embed)
-
-
-class ImageButtons(miru.View):
-    mctx: crescent.Context
-    page_number: int = 0
-    pages: list[str]
-    embed: hikari.Embed
-
-    def __init__(self, **kwargs):
-        super().__init__(timeout=kwargs["timeout"])
-        self.mctx = kwargs["mctx"]
-        self.pages = kwargs["pages"]
-        self.embed = kwargs["embed"]
-
-    @miru.button(label="", emoji="⬅️", style=hikari.ButtonStyle.SECONDARY)
-    async def left_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        self.page_number = (self.page_number - 1) % len(self.pages)
-        self.embed.set_image(self.pages[self.page_number])
-        self.embed.set_footer(f"Image {self.page_number+1} of {len(self.pages)}")
-        await self.mctx.edit(self.embed)
-
-    @miru.button(label="", emoji="➡️", style=hikari.ButtonStyle.SECONDARY)
-    async def right_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        self.page_number = (self.page_number + 1) % len(self.pages)
-        self.embed.set_image(self.pages[self.page_number])
-        self.embed.set_footer(f"Image {self.page_number+1} of {len(self.pages)}")
-        await self.mctx.edit(self.embed)
-
 
 async def autocomplete_response(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
@@ -118,55 +54,38 @@ class ListCommand:
         )
 
         if len(character_list) > 1:
-            description = "Multiple characters fit your query. Please narrow your search or search by ID.\n\n"
-            page = []
+
+            query_arr = []
+            if self.name_search:
+                query_arr.append(f"name: {self.name_search}")
+            if self.appearances_search:
+                query_arr.append(f"appearances: {self.appearances_search}")
+
+            header = f"Multiple characters fit your query. Please narrow your search or search by ID.\nquery: `{', '.join(query_arr)}`\n\n"
+            pages = []
 
             count = 0
             while count < len(character_list):
-                page.append(character_list[count : 20 + count])
+                characters_on_page = character_list[count : 20 + count]
+
+                description = header
+
+                for character in characters_on_page:
+                    description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` {character.first_name} {character.last_name}\n"
+
+                embed = hikari.Embed(title="Search results", color="f598df", description=description)
+
+                pages.append(embed)
                 count += 20
 
-            for character in page[0]:
-                description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` {character.first_name} {character.last_name}\n"
-            embed = hikari.Embed(title="Search results", color="f598df", description=description)
-            embed.set_footer(f"Page {1} of {len(page)}")
-
-            view: miru.View = ScrollButtons(timeout=180, mctx=ctx, pages=page, embed=embed)
-            resp = await ctx.respond(embed, components=view)
-            await view.start(resp)
+            navigator = nav.NavigatorView(pages=pages)
+            await navigator.send(ctx.interaction)
 
         elif len(character_list) == 0:
             await ctx.respond("No results were found for your query!")
             return
         else:
             character = character_list[0]
-            name = character.first_name + " " + character.last_name
-            description = f"ID `{character.id}` • {character.value}<:wishfragments:1148459769980530740>"
 
-            embed = hikari.Embed(title=name, color="f598df", description=description)
-
-            embed.set_image(character.images[0])
-
-            anime_list = sorted(character.anime)
-            manga_list = sorted(character.manga)
-            games_list = sorted(character.games)
-            animeography = ""
-            count = 0
-            for manga in manga_list:
-                animeography += f"📖 {manga}\n" if manga != "" and count < 4 else ""
-                count += 1
-            for anime in anime_list:
-                animeography += f"🎬 {anime}\n" if anime != "" and count < 4 else ""
-                count += 1
-            for game in games_list:
-                animeography += f"🎮 {game}\n" if game != "" and count < 4 else ""
-                count += 1
-            if count >= 4:
-                animeography += f"*and {count-4} more..*"
-
-            embed.add_field(name="Appears in:", value=animeography)
-            embed.set_footer(f"Image {1} of {len(character.images)}")
-
-            view = ImageButtons(timeout=180, mctx=ctx, pages=character.images, embed=embed)
-            resp = await ctx.respond(embed, components=view)
-            await view.start(resp)
+            navigator = character.get_navigator()
+            await navigator.send(ctx.interaction)

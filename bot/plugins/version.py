@@ -2,7 +2,7 @@ import os
 
 import crescent
 
-from bot.utils import Plugin
+from bot.model import Plugin
 
 plugin = Plugin()
 
