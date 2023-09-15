@@ -88,12 +88,12 @@ class InfoCommand:
             embed.set_image(img_byte_arr.getvalue())
 
             embed.add_field(name="⬆️ Upgrade Levels",
-                            value=f"Roll Regen Rate: **Lv{upgrades[Upgrades.ROLL_REGEN]}**\nMax Rolls: **Lv{upgrades[Upgrades.ROLL_MAX]}**\nFragment Multiplier: **Lv{upgrades[Upgrades.FRAGMENT_BONUS]}**", 
+                            value=f"Roll Regen Rate: **Lv{upgrades[Upgrades.ROLL_REGEN]}**\nMax Rolls: **Lv{upgrades[Upgrades.ROLL_MAX]}**\nFragment Multiplier: **Lv{upgrades[Upgrades.FRAGMENT_BONUS]}**",
                             inline=True)
             embed.add_field(name="⠀",
-                            value=f"Daily Bounty: **Lv{upgrades[Upgrades.DAILY_BONUS]}**\nWishlist Size: **Lv{upgrades[Upgrades.WISHLIST_SIZE]}**\nWishlist Rate: **Lv{upgrades[Upgrades.WISHLIST_RATE_BONUS]}**", 
+                            value=f"Daily Bounty: **Lv{upgrades[Upgrades.DAILY_BONUS]}**\nWishlist Size: **Lv{upgrades[Upgrades.WISHLIST_SIZE]}**\nWishlist Rate: **Lv{upgrades[Upgrades.WISHLIST_RATE_BONUS]}**",
                             inline=True)
 
             embed.add_field(name="⠀",
-                            value=f"**⭐ Character display**")
+                            value=f"**⭐ Display Case**")
         await ctx.respond(embed)
