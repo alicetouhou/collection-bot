@@ -9,41 +9,6 @@ from bot.model import Plugin
 plugin = Plugin()
 
 
-class ScrollButtons(miru.View):
-    mctx: crescent.Context
-    page_number: int = 0
-    pages: list[list[Character]]
-    embed: hikari.Embed
-
-    def __init__(self, **kwargs):
-        super().__init__(timeout=kwargs["timeout"])
-        self.mctx = kwargs["mctx"]
-        self.pages = kwargs["pages"]
-        self.embed = kwargs["embed"]
-
-    def get_description(self) -> str:
-        description = ""
-        for character in self.pages[self.page_number]:
-            description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` **{character.first_name} {character.last_name}** • <:wishfragments:1148459769980530740> {character.value}\n"
-        return description
-
-    @miru.button(label="", emoji="⬅️", style=hikari.ButtonStyle.SECONDARY)
-    async def left_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        self.page_number = (self.page_number - 1) % len(self.pages)
-        new_description = self.get_description()
-        self.embed.description = new_description
-        self.embed.set_footer(f"Page {self.page_number+1} of {len(self.pages)}")
-        await self.mctx.edit(self.embed)
-
-    @miru.button(label="", emoji="➡️", style=hikari.ButtonStyle.SECONDARY)
-    async def right_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        self.page_number = (self.page_number + 1) % len(self.pages)
-        new_description = self.get_description()
-        self.embed.description = new_description
-        self.embed.set_footer(f"Page {self.page_number+1} of {len(self.pages)}")
-        await self.mctx.edit(self.embed)
-
-
 @plugin.include
 @crescent.command(name="list", description="List the characters you or another player currently have.")
 class ListCommand:
@@ -66,14 +31,22 @@ class ListCommand:
 
             count = 0
             while count < len(character_list):
-                characters_on_page = character_list[count : 20 + count]
+                characters_on_page = character_list[count: 20 + count]
 
                 description = header
 
                 for character in characters_on_page:
+                    if character is None:
+                        break
+
                     description += f"`{'0' * (6 - len(str(character.character.id)))}{character.character.id}` **{character.character.first_name} {character.character.last_name}** • <:wishfragments:1148459769980530740> {character.character.value}\n"
 
-                embed = hikari.Embed(title=f"{user.name}'s Characters", color="f598df", description=description)
+                embed = hikari.Embed(
+                    title=f"{user.name}'s Characters", color="f598df", description=description)
+
+                if character_list[0] is None:
+                    return
+
                 embed.set_thumbnail(character_list[0].character.images[0])
 
                 pages.append(embed)

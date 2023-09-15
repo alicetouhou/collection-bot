@@ -1,8 +1,11 @@
 import crescent
 import hikari
 import miru
+import asyncio
+import random
 
 from bot.character import Character
+from bot.upgrades import Upgrades
 from bot.model import Plugin
 
 plugin = Plugin()
@@ -28,15 +31,17 @@ class ClaimView(miru.View):
             )
             return
         await user.append_to_characters(self.character)
-        await user.set_claims(claims -1)
+        await user.set_claims(claims - 1)
         await ctx.respond(
             f"**{ctx.user.mention}** claimed **{self.character.first_name} {self.character.last_name}**!\nRemaining claims: **{claims-1}**"
         )
+
     async def on_timeout(self) -> None:
         for item in self.children:
             item.disabled = True
+        if self.message is None:
+            return
         await self.message.edit(components=self)
-
 
 
 class FragmentView(miru.View):
@@ -56,14 +61,18 @@ class FragmentView(miru.View):
         await self.on_timeout()
         user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
         currency = await user.currency
-        user.set_currency(currency + self.character.value)
-        await ctx.respond(
-            f"**{ctx.user.mention}** obtained **{self.character.value}**<:wishfragments:1148459769980530740>"
-        )
+        multiplier = await user.get_upgrade_value(Upgrades.FRAGMENT_BONUS)
+        await user.set_currency(currency + int(self.character.value * multiplier))
+        description = f"**{ctx.user.mention}** obtained **{self.character.value}**<:wishfragments:1148459769980530740>"
+        if multiplier > 1:
+            description = f"**{ctx.user.mention}** obtained **{int(self.character.value * multiplier)}**<:wishfragments:1148459769980530740> (Multiplier bonus)"
+        await ctx.respond(description)
 
     async def on_timeout(self) -> None:
         for item in self.children:
             item.disabled = True
+        if self.message is None:
+            return
         await self.message.edit(components=self)
 
 
@@ -71,31 +80,50 @@ class FragmentView(miru.View):
 @crescent.command(name="roll", description="Roll a character.")
 class RollCommand:
     async def callback(self, ctx: crescent.Context) -> None:
-        assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
 
-        user = await dbsearch.create_user(ctx, ctx.user)
+        user, picked_character = await asyncio.gather(
+            dbsearch.create_user(ctx, ctx.user),
+            dbsearch.create_random_character(ctx)
+        )
 
-        rolls = await user.rolls
+        rolls, bonus, claimed, wishlist_people = await asyncio.gather(
+            user.rolls,
+            user.get_upgrade_value(Upgrades.WISHLIST_RATE_BONUS),
+            picked_character.get_claimed_id(),
+            picked_character.get_wished_ids()
+        )
+
+        if bonus:
+            random_number = random.random()
+            if (random_number < bonus):
+                wishlist = await user.wishlist
+                random_index = random.choice(wishlist)
+                new_character = await dbsearch.create_character_from_id(ctx, random_index)
+
+                if new_character is not None:
+                    picked_character = new_character
+                    wishlist_people = await picked_character.get_wished_ids()
+
         if rolls <= 0:
             await ctx.respond("You have no rolls left! Use **/getrolls** to claim more.")
             return
-        picked_character = await dbsearch.create_random_character(ctx)
-        claimed = (await picked_character.get_claimed_id()) > 0
-
-        wishlist_people = await picked_character.get_wished_ids()
 
         wishlist_people_formatted = ""
         for id in wishlist_people:
             wishlist_people_formatted += f"<@{id}> "
 
-        view: miru.View = ClaimView(timeout=180, character=picked_character.character)
+        view: miru.View = ClaimView(
+            timeout=180, character=picked_character.character)
 
-        if claimed:
-            view = FragmentView(timeout=180, character=picked_character.character)
+        # if claimed:
+        if True:
+            view = FragmentView(
+                timeout=180, character=picked_character.character)
 
         embed = picked_character.character.get_claimable_embed()
-        embed.set_footer(f"{rolls - 1} roll{'s' if rolls != 2 else ''} remaining")
+        embed.set_footer(
+            f"{rolls - 1} roll{'s' if rolls != 2 else ''} remaining")
 
         await ctx.respond(
             wishlist_people_formatted,

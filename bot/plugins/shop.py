@@ -2,6 +2,7 @@ import crescent
 import hikari
 
 from bot.model import Plugin
+from bot.shop_item import ShopItem, shop_items
 
 plugin = Plugin()
 
@@ -13,55 +14,60 @@ shop_group = crescent.Group("shop")
 @crescent.command(name="view", description="View the shop.")
 class ViewCommand:
     async def callback(self, ctx: crescent.Context) -> None:
-        description = "🎲 Buy a roll: **250<:wishfragments:1148459769980530740>** • `/shop buy roll`\n"
-        description += "🥅 Buy a claim: **900<:wishfragments:1148459769980530740>** • `/shop buy claim`\n"
+        description = "Use `/shop buy item name` to buy items.\n\n"
+        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
+
+        for item in shop_items:
+            description += item.description_line() + "\n"
+        description += "\n"
+
+        upgrades = await user.get_upgrade_shop_objects()
+
+        for item in upgrades:
+            description += item.description_line() + "\n"
+
         description += "\n\n*More items coming soon!*"
-        embed = hikari.Embed(title="⛩️ Suzunaan Store", color="f598df", description=description)
+        embed = hikari.Embed(title="⛩️ Suzunaan Store",
+                             color="f598df", description=description)
         await ctx.respond(embed)
 
 
 async def autocomplete_response(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
-) -> list[tuple]:
-    return [
-        ("claim", "claim"),
-        ("roll", "roll"),
-    ]
+) -> list[tuple[str, int]]:
+    user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
+    upgrades = await user.get_upgrade_shop_objects()
+    combined_list = list(shop_items) + upgrades
+    return [(item.name, index) for index, item in enumerate(combined_list)]
 
-"""Todo: fix shop buy"""
+
 @shop_group.child
 @plugin.include
 @crescent.command(name="buy", description="Buy an item.")
 class BuyCommand:
-    item = crescent.option(str, "Select an item to purchase.", name="item")
+    item = crescent.option(int, "Select an item to purchase.",
+                           name="item", autocomplete=autocomplete_response)
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
         user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
+        upgrades = await user.get_upgrade_shop_objects()
+        combined_list = list(shop_items) + upgrades
 
-        if self.item not in ["roll", "claim"]:
+        if self.item > len(combined_list) - 1 or self.item < 0:
             await ctx.respond(f"**{self.item}** is not a valid item!")
-
-        currency = await user.currency
-
-        if self.item == "roll" and currency >= 250:
-            await user.set_currency(currency - 250)
-            rolls = await user.rolls
-            await user.set_rolls(rolls + 1)
-            await ctx.respond(
-                f"You purchased a **roll**!\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{currency-250}**"
-            )
             return
 
-        elif self.item == "claim" and currency >= 900:
-            await user.set_currency(currency - 900)
-            claims = await user.claims
-            await user.set_claims(claims + 1)
-            await ctx.respond(
-                f"You purchased a **claim**!\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{currency-900}**"
-            )
+        currency = await user.currency
+        selected_item = combined_list[self.item]
+
+        if currency >= selected_item.price:
+            purchased = await selected_item.purchased(ctx, user)
+            if purchased:
+                await user.set_currency(currency - selected_item.price)
+
             return
 
         await ctx.respond(
-            "You do not have enough <:wishfragments:1148459769980530740> wish fragments to purchase that item."
+            f"You do not have enough <:wishfragments:1148459769980530740> wish fragments to purchase {selected_item.article()} {selected_item.cased_name()}."
         )

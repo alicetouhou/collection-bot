@@ -11,6 +11,7 @@ from bot.dbsearch import DBSearch
 
 logger = logging.getLogger(__name__)
 
+
 class Model:
     def __init__(self, bot: hikari.GatewayBot) -> None:
         self.guilds: list[hikari.Snowflake] = []
@@ -48,6 +49,9 @@ class Model:
             dsn=f"postgresql://{os.environ['DATABASE_USER']}:{os.environ['DATABASE_PASSWORD']}@{os.environ['DATABASE_HOST']}:{os.environ['DATABASE_PORT']}/{os.environ['DATABASE']}",
         )
 
+        if self.dbpool is None:
+            return
+
         async with self.dbpool.acquire() as conn:
 
             await conn.execute("CREATE TABLE IF NOT EXISTS servers (ID varchar(31), PRIMARY KEY (ID))")
@@ -70,6 +74,11 @@ class Model:
         This function is called when your bot stops. This is a good place to put
         cleanup functions for the model class.
         """
+
+        if self.dbpool is None:
+            return
+
         await self.dbpool.close()
+
 
 Plugin = crescent.Plugin[hikari.GatewayBot, Model]

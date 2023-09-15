@@ -3,6 +3,7 @@ import time
 import crescent
 
 from bot.model import Plugin
+from bot.upgrades import Upgrades
 
 plugin = Plugin()
 
@@ -10,7 +11,7 @@ plugin = Plugin()
 @plugin.include
 @crescent.command(
     name="getrolls",
-    description="Get your rolls. One roll regenerates every 15 minutes, and 30 can be stored until regeration stops.",
+    description="Get your rolls. Without upgrades, One roll regenerates every 15 minutes, until 20 is reached.",
 )
 class ListCommand:
     async def callback(self, ctx: crescent.Context) -> None:
@@ -18,6 +19,9 @@ class ListCommand:
         dbsearch = plugin.model.dbsearch
 
         user = await dbsearch.create_user(ctx, ctx.user)
+
+        claim_time = int(await user.get_upgrade_value(Upgrades.ROLL_REGEN))
+        roll_max = int(await user.get_upgrade_value(Upgrades.ROLL_MAX))
 
         last_claim_time = await user.rolls_claimed_time
         current_time = int(time.time())
@@ -32,9 +36,9 @@ class ListCommand:
             regenerate_time = 900
             rolls_to_be_claimed = 10
         else:
-            rolls_to_be_claimed = min(stockpile, 30)
-            last_regeneration = last_claim_time + stockpile * 900
-            regenerate_time = 900 - (current_time - last_regeneration)
+            rolls_to_be_claimed = min(stockpile, roll_max)
+            last_regeneration = last_claim_time + stockpile * claim_time
+            regenerate_time = claim_time - (current_time - last_regeneration)
             await user.set_rolls_claimed_time(last_regeneration)
             await user.set_rolls((await user.rolls) + rolls_to_be_claimed)
         message = f"{rolls_to_be_claimed} rolls have been claimed.\nNext roll regenerates in: **{int(regenerate_time/60)}** minutes and **{regenerate_time % 60}** seconds"

@@ -6,17 +6,19 @@ from bot.character_instance import CharacterInstance
 from bot.user import User
 
 import crescent
+import miru
 import hikari
 
 if t.TYPE_CHECKING:
     from bot.model import Model
 
+
 class DBSearch:
-    
+
     def __init__(self, model):
         self.model = model
 
-    async def create_user(self, context: crescent.Context, player_id) -> User:
+    async def create_user(self, context: crescent.Context | crescent.AutocompleteContext | miru.ViewContext, player_id) -> User:
         user = User(context, player_id, self.model)
         await user.add_player_to_db()
         return user
@@ -30,7 +32,7 @@ class DBSearch:
         try:
             records = await self.model.dbpool.fetch(
                 "SELECT * FROM characters WHERE ID = $1", id,
-            )    
+            )
             character = Character.from_record(records[0])
             instance = CharacterInstance(context, character, self.model)
             return instance
@@ -44,4 +46,3 @@ class DBSearch:
         character = Character.from_record(records[0])
         instance = CharacterInstance(context, character, self.model)
         return instance
-    

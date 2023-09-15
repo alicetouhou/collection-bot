@@ -2,38 +2,47 @@ import csv
 import typing as t
 
 from bot.character import Character
+from bot import shop_item as items
+from bot.upgrades import Upgrades, UpgradeEffects
 
 import crescent
+import miru
 import hikari
 
 if t.TYPE_CHECKING:
     from bot.model import Model
 
+
 class User:
     """A class that handles all DB functions for the player"""
 
-    guild: hikari.Snowflake = None
-    player_id: hikari.Snowflake = None
-    name: str = None
+    guild: hikari.Snowflake | None = None
+    player_id: hikari.Snowflake | None = None
+    name: str | None = None
 
-    _guild_str: str = None
+    _guild_str: str | None = None
 
-    _characters: list[str] = None
-    _wishlist: list[str] = None
+    _characters: list[int] | None = None
+    _wishlist: list[int] | None = None
 
-    _currency: int = None
-    _rolls: int = None
-    _claims: int = None
+    _currency: int | None = None
+    _rolls: int | None = None
+    _claims: int | None = None
 
-    _rolls_claimed_time: str = None
-    _daily_claimed_time: str = None
+    _rolls_claimed_time: int | None = None
+    _daily_claimed_time: int | None = None
 
-    def __init__(self, ctx: crescent.Context, user: hikari.User, model):
+    _upgrades: dict[Upgrades, int] | None = None
+
+    def __init__(self, ctx: crescent.Context | crescent.AutocompleteContext | miru.ViewContext, user: hikari.User, model):
+        if ctx.guild_id is None:
+            return
+
         self.guild = hikari.Snowflake(ctx.guild_id)
         self.player_id = user.id
         self._guild_str = f"players_{hikari.Snowflake(ctx.guild_id)}"
         self.name = user.username
-        self.model = model
+        self.model: Model = model
 
     async def add_player_to_db(self):
         await self.model.dbpool.execute(
@@ -42,13 +51,19 @@ class User:
             0,
         )
 
-    async def _fetch(self, param: any, field: str):
+    async def _fetch(self, param: t.Any, field: str) -> t.Any:
+        if self.model.dbpool is None:
+            return None
+
         if param is None:
             records = await self.model.dbpool.fetch(f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(self.player_id))
             return records[0][field]
         return param
-    
-    async def _execute(self, value: any, field: str):
+
+    async def _execute(self, value: t.Any, field: str) -> str | None:
+        if self.model.dbpool is None:
+            return None
+
         async with self.model.dbpool.acquire() as conn:
             await conn.execute(
                 f"UPDATE {self._guild_str} SET {field} = $1 WHERE ID = $2",
@@ -67,7 +82,7 @@ class User:
         if (self._rolls):
             self._rolls = value
 
-    @property 
+    @property
     async def rolls_claimed_time(self) -> int:
         return await self._fetch(self._rolls_claimed_time, "claimed_rolls")
 
@@ -77,7 +92,7 @@ class User:
         if (self._rolls_claimed_time):
             self._rolls_claimed_time = value
 
-    @property 
+    @property
     async def claims(self) -> int:
         return await self._fetch(self._claims, "claims")
 
@@ -86,7 +101,7 @@ class User:
         if (self._claims):
             self._claims = value
 
-    @property 
+    @property
     async def daily_claimed_time(self) -> int:
         return await self._fetch(self._daily_claimed_time, "claimed_daily")
 
@@ -95,7 +110,7 @@ class User:
         if (self._daily_claimed_time):
             self._daily_claimed_time = value
 
-    @property 
+    @property
     async def currency(self) -> int:
         return await self._fetch(self._currency, "currency")
 
@@ -104,7 +119,10 @@ class User:
         if (self._currency):
             self._currency = value
 
-    async def _fetch_character_group(self, param: any, field: str) -> list[int]:
+    async def _fetch_int_group(self, param: t.Any, field: str) -> list[int]:
+        if self.model.dbpool is None:
+            return []
+
         if param is None:
             record = await self.model.dbpool.fetch(f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(self.player_id))
             character_str = record[0][field]
@@ -112,8 +130,25 @@ class User:
             filtered_list = filter(lambda x: x != '', character_ids_list)
             return [int(x) for x in filtered_list]
         return param
-    
-    async def _append_to_chararacter_list(self, list, character: Character, field: str, prepend=False):
+
+    async def _set_int_group(self, field: str, value: list[int]) -> None:
+        if self.model.dbpool is None:
+            return None
+
+        stringified_value = ",".join([str(x) for x in value])
+
+        async with self.model.dbpool.acquire() as conn:
+            await conn.execute(
+                f"UPDATE {self._guild_str} SET {field} = $1 WHERE ID = $2",
+                stringified_value,
+                str(self.player_id),
+            )
+        return value
+
+    async def _append_to_chararacter_list(self, list, character: Character, field: str, prepend=False) -> None:
+        if self.model.dbpool is None:
+            return
+
         async with self.model.dbpool.acquire() as conn:
             if prepend is False:
                 list.append(character.id)
@@ -129,9 +164,12 @@ class User:
             )
 
     async def _remove_from_character_list(self, list, character: Character, field: str):
+        if self.model.dbpool is None:
+            return
+
         async with self.model.dbpool.acquire() as conn:
             list.remove(character.id)
-            
+
             stringified_list = ",".join(map(str, list))
 
             await conn.execute(
@@ -141,33 +179,85 @@ class User:
             )
 
     @property
-    async def characters(self) -> int:
-        return await self._fetch_character_group(self._characters, "characters")
-    
+    async def characters(self) -> list[int]:
+        return await self._fetch_int_group(self._characters, "characters")
+
     async def append_to_characters(self, character: Character, prepend=False):
-        self._characters = await self._fetch_character_group(self._characters, "characters")
+        self._characters = await self._fetch_int_group(self._characters, "characters")
         await self._append_to_chararacter_list(self._characters, character, "characters", prepend=prepend)
-        self._characters = await self._fetch_character_group(self._characters, "characters")
+        self._characters = await self._fetch_int_group(self._characters, "characters")
 
     async def remove_from_characters(self, character: Character):
-        self._characters = await self._fetch_character_group(self._characters, "characters")
+        self._characters = await self._fetch_int_group(self._characters, "characters")
         await self._remove_from_character_list(self._characters, character, "characters")
-        self._characters = await self._fetch_character_group(self._characters, "characters")
-    
+        self._characters = await self._fetch_int_group(self._characters, "characters")
+
     @property
-    async def wishlist(self) -> int:
-        return await self._fetch_character_group(self._wishlist, "wishlist")
-    
+    async def wishlist(self) -> list[int]:
+        return await self._fetch_int_group(self._wishlist, "wishlist")
+
     async def append_to_wishlist(self, character: Character):
-        self._wishlist = await self._fetch_character_group(self._wishlist, "wishlist")
+        self._wishlist = await self._fetch_int_group(self._wishlist, "wishlist")
         await self._append_to_chararacter_list(self._wishlist, character, "wishlist")
-        self._wishlist = await self._fetch_character_group(self._wishlist, "wishlist")
+        self._wishlist = await self._fetch_int_group(self._wishlist, "wishlist")
 
     async def remove_from_wishlist(self, character: Character):
-        self._wishlist = await self._fetch_character_group(self._wishlist, "wishlist")
+        self._wishlist = await self._fetch_int_group(self._wishlist, "wishlist")
         await self._remove_from_character_list(self._wishlist, character, "wishlist")
-        self._wishlist = await self._fetch_character_group(self._wishlist, "wishlist")
+        self._wishlist = await self._fetch_int_group(self._wishlist, "wishlist")
 
     async def reorder(self, character: Character):
         await self.remove_from_characters(character)
         await self.append_to_characters(character, prepend=True)
+
+    @property
+    async def upgrades(self) -> dict[Upgrades, int]:
+        upgrades = await self._fetch_int_group(self._upgrades, "upgrades")
+        if upgrades == []:
+            upgrades = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        upgrades_dict = {
+            Upgrades.ROLL_REGEN: upgrades[0],
+            Upgrades.ROLL_MAX: upgrades[1],
+            Upgrades.DAILY_BONUS: upgrades[2],
+            Upgrades.FRAGMENT_BONUS: upgrades[3],
+            Upgrades.WISHLIST_SIZE: upgrades[4],
+            Upgrades.WISHLIST_RATE_BONUS: upgrades[5],
+        }
+
+        return upgrades_dict
+
+    async def increase_upgrade_level(self, index: Upgrades) -> None:
+        upgrades = await self.upgrades
+        upgrades[index] = upgrades[index] + 1
+
+        new_combined_list = [
+            upgrades[Upgrades.ROLL_REGEN],
+            upgrades[Upgrades.ROLL_MAX],
+            upgrades[Upgrades.DAILY_BONUS],
+            upgrades[Upgrades.FRAGMENT_BONUS],
+            upgrades[Upgrades.WISHLIST_SIZE],
+            upgrades[Upgrades.WISHLIST_RATE_BONUS],
+            0,
+            0,
+            0,
+            0,
+        ]
+
+        await self._set_int_group("upgrades", new_combined_list)
+
+    async def get_upgrade_shop_objects(self) -> list[items.Upgrade]:
+        upgrades = await self.upgrades
+        return [
+            items.RollGenerationRate(level=upgrades[Upgrades.ROLL_REGEN]),
+            items.RollMaximum(level=upgrades[Upgrades.ROLL_MAX]),
+            items.FragmentBonus(level=upgrades[Upgrades.FRAGMENT_BONUS]),
+            items.DailyBounty(level=upgrades[Upgrades.DAILY_BONUS]),
+            items.WishlistSize(level=upgrades[Upgrades.WISHLIST_SIZE]),
+            items.WishlistRateUp(level=upgrades[Upgrades.WISHLIST_RATE_BONUS]),
+        ]
+
+    async def get_upgrade_value(self, value: Upgrades) -> int | float:
+        upgrades = await self.upgrades
+        output = UpgradeEffects.upgrades[value].modifier(upgrades[value])
+        return output
