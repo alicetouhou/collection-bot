@@ -116,8 +116,7 @@ class RollCommand:
         view: miru.View = ClaimView(
             timeout=180, character=picked_character.character)
 
-        # if claimed:
-        if True:
+        if claimed:
             view = FragmentView(
                 timeout=180, character=picked_character.character)
 
