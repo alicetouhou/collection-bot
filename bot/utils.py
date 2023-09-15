@@ -61,7 +61,7 @@ class Utils:
 
             if id:
                 sql += f"AND ID = $1 "
-                args.append(str(id))
+                args.append(id)
             if fn:
                 sql += f"AND LOWER(first_name) = LOWER($2) "
                 fn = "%" + fn + "%" if fuzzy else fn
@@ -100,7 +100,8 @@ class Utils:
             sql = sql.replace("last_name", "first_name")
             sql = sql.replace("temp_name", "last_name")
 
-            characters_b = await conn.fetch(sql, *args)
+            if id is None:
+                characters_b = await conn.fetch(sql, *args)
 
             character_list = []
             for record in characters_a:

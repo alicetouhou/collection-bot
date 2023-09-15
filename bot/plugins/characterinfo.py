@@ -8,6 +8,7 @@ from bot.model import Plugin
 
 plugin = Plugin()
 
+
 async def autocomplete_response(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
 ) -> list[tuple[str, str]]:
@@ -27,7 +28,8 @@ async def autocomplete_response(
 @plugin.include
 @crescent.command(name="characterinfo", description="Search for a character.")
 class ListCommand:
-    id_search = crescent.option(int, "Search for a character by ID.", name="id", default=None, min_value=1)
+    id_search = crescent.option(
+        int, "Search for a character by ID.", name="id", default=None, min_value=1)
     name_search = crescent.option(
         str,
         "Search for a character by name. The given and family names can be in any order.",
@@ -56,6 +58,8 @@ class ListCommand:
         if len(character_list) > 1:
 
             query_arr = []
+            if self.id_search:
+                query_arr.append(f"id: {self.id_search}")
             if self.name_search:
                 query_arr.append(f"name: {self.name_search}")
             if self.appearances_search:
@@ -66,14 +70,15 @@ class ListCommand:
 
             count = 0
             while count < len(character_list):
-                characters_on_page = character_list[count : 20 + count]
+                characters_on_page = character_list[count: 20 + count]
 
                 description = header
 
                 for character in characters_on_page:
                     description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` {character.first_name} {character.last_name}\n"
 
-                embed = hikari.Embed(title="Search results", color="f598df", description=description)
+                embed = hikari.Embed(title="Search results",
+                                     color="f598df", description=description)
 
                 pages.append(embed)
                 count += 20

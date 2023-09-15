@@ -21,9 +21,9 @@ class InfoCommand:
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
-        utils = plugin.model.utils
+        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
 
-        currency = await utils.get_currency(ctx.guild_id, ctx.user.id)
+        currency = await user.currency
 
         if self.wager > currency:
             await ctx.respond(
@@ -34,12 +34,12 @@ class InfoCommand:
         flip = "heads" if random.randint(0, 1) == 1 else "tails"
 
         if flip == "heads":
-            await utils.add_currency(ctx.guild_id, ctx.user.id, self.wager)
+            await user.set_currency(currency + self.wager)
             await ctx.respond(
                 f"Congrats! I flipped heads, and your wager doubled from **<:wishfragments:1148459769980530740>{self.wager}** to **<:wishfragments:1148459769980530740>{self.wager * 2}**. You now have <:wishfragments:1148459769980530740>**{currency + self.wager}** wish fragments"
             )
         else:
-            await utils.add_currency(ctx.guild_id, ctx.user.id, self.wager)
+            await user.set_currency(currency - self.wager)
             await ctx.respond(
                 f"Too bad! I flipped tails. You just lost your wager of **<:wishfragments:1148459769980530740>{self.wager}**. You now have <:wishfragments:1148459769980530740> {currency - self.wager} wish fragments. You should try gambling more to make back what you lost."
             )
