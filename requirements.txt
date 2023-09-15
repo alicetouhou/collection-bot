@@ -5,4 +5,4 @@ hikari-miru
 psycopg2-binary
 asyncpg
 aiohttp
-pillow
+Pillow
