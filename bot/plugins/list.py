@@ -39,7 +39,7 @@ class ListCommand:
                     if character is None:
                         break
 
-                    description += f"`{'0' * (6 - len(str(character.character.id)))}{character.character.id}` **{character.character.first_name} {character.character.last_name}** • <:wishfragments:1148459769980530740> {character.character.value}\n"
+                    description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` **{character.first_name} {character.last_name}** • <:wishfragments:1148459769980530740> {character.value}\n"
 
                 embed = hikari.Embed(
                     title=f"{user.name}'s Characters", color="f598df", description=description)
@@ -47,7 +47,7 @@ class ListCommand:
                 if character_list[0] is None:
                     return
 
-                embed.set_thumbnail(character_list[0].character.images[0])
+                embed.set_thumbnail(character_list[0].images[0])
 
                 pages.append(embed)
                 count += 20

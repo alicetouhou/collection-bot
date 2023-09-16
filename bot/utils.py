@@ -26,92 +26,11 @@ class Utils:
             await ctx.respond(f"{char_id} is not a valid ID!")
             return None
 
-        character = selected_character.character
-
         if char_id not in user_character_ids:
-            await ctx.respond(f"**{character.first_name} {character.last_name}** is not in your list!")
+            await ctx.respond(f"**{selected_character.first_name} {selected_character.last_name}** is not in your list!")
             return None
 
-        return character
-
-    async def search_characters(
-        self,
-        id: int | None,
-        name: str | None,
-        appearances: str | None,
-        limit: int = 0,
-        fuzzy: bool = False,
-    ) -> list[Character]:
-        if self.model.dbpool is None:
-            return []
-
-        async with self.model.dbpool.acquire() as conn:
-            fn = None
-            ln = None
-            if name:
-                fn = name
-                ln = None
-                names = name.split(" ")
-                if len(names) > 1:
-                    fn = " ".join(names[0: len(names) - 1])
-                    ln = names[len(names) - 1]
-
-            sql = "SELECT * FROM characters "
-            args = []
-
-            if id:
-                sql += f"AND ID = $1 "
-                args.append(id)
-            if fn:
-                sql += f"AND LOWER(first_name) = LOWER($2) "
-                fn = "%" + fn + "%" if fuzzy else fn
-                args.append(fn)
-            if ln:
-                sql += f"AND LOWER(last_name) = LOWER($3) "
-                ln = "%" + ln + "%" if fuzzy else ln
-                args.append(ln)
-
-            if fuzzy is True:
-                sql = sql[::-1].replace("=", "EKIL", 2)[::-1]
-
-            if appearances:
-                appearances = "%" + appearances + "%"
-                sql += f"AND (LOWER(anime_list) LIKE LOWER($4) OR LOWER(manga_list) LIKE LOWER($4) OR LOWER(games_list) LIKE LOWER($4)) "
-                args.append(str(appearances))
-            sql += "ORDER BY first_name "
-            sql = sql.replace("AND", "WHERE", 1)
-            if limit > 0:
-                sql += f"LIMIT {limit}"
-
-            if "$3" not in sql:
-                sql = sql.replace("$4", "$3")
-            if "$2" not in sql:
-                sql = sql.replace("$3", "$2")
-            if "$1" not in sql:
-                sql = sql.replace("$2", "$1")
-            if "$2" not in sql:
-                sql = sql.replace("$3", "$2")
-
-            characters_a = await conn.fetch(sql, *args)
-
-            characters_b = []
-
-            sql = sql.replace("first_name", "temp_name")
-            sql = sql.replace("last_name", "first_name")
-            sql = sql.replace("temp_name", "last_name")
-
-            if id is None:
-                characters_b = await conn.fetch(sql, *args)
-
-            character_list = []
-            for record in characters_a:
-                if record not in character_list:
-                    character_list.append(Character.from_record(record))
-            for record in characters_b:
-                if record not in character_list:
-                    character_list.append(Character.from_record(record))
-
-            return character_list
+        return selected_character
 
     async def add_characters_to_db(self) -> None:
         if self.model.dbpool is None:
@@ -150,3 +69,43 @@ class Utils:
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
                 data,
             )
+
+    async def character_search_autocomplete(self,
+                                            ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+                                            ) -> list[tuple[str, str]]:
+        options = ctx.options
+
+        character_list = await self.model.dbsearch.create_character_from_search(
+            ctx,
+            options["search"]
+        )
+
+        output = []
+        for character in character_list:
+            name = f"{character.first_name} {character.last_name} ({character.get_series()[0]})"
+            if len(name) > 100:
+                name = name[0:98] + "..."
+            output.append((name, str(character.id)))
+        return output
+
+    async def character_search_in_list_autocomplete(self,
+                                                    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+                                                    ) -> list[tuple[str, str]]:
+        options = ctx.options
+
+        user = await self.model.dbsearch.create_user(ctx, ctx.user)
+        user_characters = await user.characters
+
+        character_list = await self.model.dbsearch.create_character_from_search(
+            ctx,
+            options["search"],
+            filter=user_characters
+        )
+
+        output = []
+        for character in character_list:
+            name = f"{character.first_name} {character.last_name} ({character.get_series()[0]})"
+            if len(name) > 100:
+                name = name[0:98] + "..."
+            output.append((name, str(character.id)))
+        return output

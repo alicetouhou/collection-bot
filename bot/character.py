@@ -18,9 +18,9 @@ class Character:
         id: int,
         first_name: str = "",
         last_name: str = "",
-        anime: str = "",
+        anime: list[str] = [],
         favorites: int = 0,
-        manga: str = "",
+        manga: list[str] = [],
     ) -> None:
         self.first_name = first_name
         self.last_name = last_name
@@ -49,7 +49,12 @@ class Character:
 
     def get_images_str(self) -> str:
         return ",".join(self.images)
-    
+
+    def get_series(self) -> list[str]:
+        series = sorted(self.anime + self.manga + self.games)
+        filtered_series = filter(lambda x: x != '', series)
+        return list(filtered_series)
+
     def _get_embed(self, image) -> hikari.Embed:
         name = self.first_name + " " + self.last_name
         description = f"ID `{self.id}` • {self.value}<:wishfragments:1148459769980530740>"
@@ -71,12 +76,12 @@ class Character:
         if count >= 4:
             animeography += f"*and {count-4} more..*"
 
-        embed = hikari.Embed(title=name, color="f598df", description=description)
+        embed = hikari.Embed(title=name, color="f598df",
+                             description=description)
         embed.set_image(image)
         embed.add_field(name="Appears in:", value=animeography)
 
         return embed
-
 
     def get_navigator(self) -> nav.NavigatorView:
         pages = []
@@ -88,8 +93,7 @@ class Character:
         buttons = [nav.PrevButton(), nav.IndicatorButton(), nav.NextButton()]
         navigator = nav.NavigatorView(pages=pages, buttons=buttons)
         return navigator
-    
+
     def get_claimable_embed(self) -> hikari.Embed:
         embed = self._get_embed(self.images[0])
         return embed
-

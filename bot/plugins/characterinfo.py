@@ -9,63 +9,27 @@ from bot.model import Plugin
 plugin = Plugin()
 
 
-async def autocomplete_response(
+async def character_search_autocomplete(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
 ) -> list[tuple[str, str]]:
-    options = ctx.options
-    character_list = await plugin.model.utils.search_characters(
-        name=options["name"], id=None, appearances=None, limit=10, fuzzy=True
-    )
-    output = []
-    for character in character_list:
-        name = f"{character.first_name} {character.last_name}"
-        if len(name) > 100:
-            name = name[0:98] + "..."
-        output.append((name, name))
-    return output
+    return await plugin.model.utils.character_search_autocomplete(ctx, option)
 
 
 @plugin.include
-@crescent.command(name="characterinfo", description="Search for a character.")
+@crescent.command(name="search", description="Search for a character.")
 class ListCommand:
-    id_search = crescent.option(
-        int, "Search for a character by ID.", name="id", default=None, min_value=1)
-    name_search = crescent.option(
+    search = crescent.option(
         str,
-        "Search for a character by name. The given and family names can be in any order.",
-        name="name",
-        default=None,
-        autocomplete=autocomplete_response,
-    )
-    appearances_search = crescent.option(
-        str,
-        "Search for a character by anime appearances.",
-        name="appearances",
-        default=None,
+        "Enter the character's name, ID, and/or the name of series they appear in.",
+        name="search",
+        autocomplete=character_search_autocomplete,
     )
 
     async def callback(self, ctx: crescent.Context) -> None:
-        if self.id_search is None and self.name_search is None and self.appearances_search is None:
-            await ctx.respond("At least one field must be filled out to search for a character.")
-            return
-
-        character_list = await plugin.model.utils.search_characters(
-            id=self.id_search,
-            name=self.name_search,
-            appearances=self.appearances_search,
-        )
+        character_list = await plugin.model.dbsearch.create_character_from_search(ctx, self.search)
 
         if len(character_list) > 1:
-
-            query_arr = []
-            if self.id_search:
-                query_arr.append(f"id: {self.id_search}")
-            if self.name_search:
-                query_arr.append(f"name: {self.name_search}")
-            if self.appearances_search:
-                query_arr.append(f"appearances: {self.appearances_search}")
-
-            header = f"Multiple characters fit your query. Please narrow your search or search by ID.\nquery: `{', '.join(query_arr)}`\n\n"
+            header = f"Multiple characters fit your query. Please narrow your search or search by ID.\nquery: `{self.search}`\n\n"
             pages = []
 
             count = 0

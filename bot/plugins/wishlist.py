@@ -11,6 +11,12 @@ plugin = Plugin()
 wishlist_group = crescent.Group("wishlist")
 
 
+async def character_search_autocomplete(
+    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+) -> list[tuple[str, str]]:
+    return await plugin.model.utils.character_search_autocomplete(ctx, option)
+
+
 @plugin.include
 @wishlist_group.child
 @crescent.command(name="list", description="View your or another server member's wishes.")
@@ -35,7 +41,7 @@ class WishListCommand:
             character_instance = await dbsearch.create_character_from_id(ctx, character_id)
 
             if character_instance is not None:
-                character_list.append(character_instance.character)
+                character_list.append(character_instance)
 
         description = ""
         for character in character_list:
@@ -50,24 +56,28 @@ class WishListCommand:
 @wishlist_group.child
 @crescent.command(name="add", description="Add a character to your wishlist.")
 class WishAddCommand:
-    id = crescent.option(int, "Enter a character's ID.",
-                         name="id", min_value=1, max_value=2147483647)
+    search = crescent.option(
+        str,
+        "Enter the character's name, ID, and/or the name of series they appear in.",
+        name="search",
+        autocomplete=character_search_autocomplete,
+    )
 
     async def callback(self, ctx: crescent.Context) -> None:
         dbsearch = plugin.model.dbsearch
         user = await dbsearch.create_user(ctx, ctx.user)
-        selected_character = await dbsearch.create_character_from_id(ctx, self.id)
 
         user_character_ids = await user.wishlist
         wishlist_size = await user.get_upgrade_value(Upgrades.WISHLIST_SIZE)
+        character_list = await dbsearch.create_character_from_search(ctx, self.search)
 
-        if not selected_character:
-            await ctx.respond(f"{self.id} is not a valid ID!")
+        if len(character_list) != 1:
+            await ctx.respond(f"You may only add one character to your wishlist at a time. Make sure your search returns a unique value.")
             return None
 
-        character = selected_character.character
+        character = character_list[0]
 
-        if self.id in user_character_ids:
+        if character.id in user_character_ids:
             await ctx.respond(f"**{character.first_name} {character.last_name}** is already in your wishlist.")
             return None
 
@@ -84,23 +94,27 @@ class WishAddCommand:
 @wishlist_group.child
 @crescent.command(name="remove", description="Remove a character from your wishlist.")
 class WishRemoveCommand:
-    id = crescent.option(int, "Enter a character's ID.",
-                         name="id", min_value=1, max_value=2147483647)
+    search = crescent.option(
+        str,
+        "Search for a character by name, or ID. The given and family names can be in any order.",
+        name="search",
+        autocomplete=character_search_autocomplete,
+    )
 
     async def callback(self, ctx: crescent.Context) -> None:
         dbsearch = plugin.model.dbsearch
         user = await dbsearch.create_user(ctx, ctx.user)
-        selected_character = await dbsearch.create_character_from_id(ctx, self.id)
+        character_list = await dbsearch.create_character_from_search(ctx, self.search)
 
         user_character_ids = await user.wishlist
 
-        if not selected_character:
-            await ctx.respond(f"{self.id} is not a valid ID!")
+        if len(character_list) != 1:
+            await ctx.respond(f"You may only remove one character to your wishlist at a time. Make sure your search returns a unique value.")
             return None
 
-        character = selected_character.character
+        character = character_list[0]
 
-        if self.id not in user_character_ids:
+        if character.id not in user_character_ids:
             await ctx.respond(f"**{character.first_name} {character.last_name}** is not in your wishlist.")
             return None
 

@@ -20,7 +20,7 @@ async def open_image_from_char_id(ctx: crescent.Context, character_id: int) -> i
         if character is None:
             return None
 
-        image_url = character.character.images[0]
+        image_url = character.images[0]
         async with aiohttp.ClientSession() as session:
             async with session.get(url=image_url) as response:
                 resp = await response.read()
@@ -31,7 +31,7 @@ async def open_image_from_char_id(ctx: crescent.Context, character_id: int) -> i
 
 
 @plugin.include
-@crescent.command(name="playerinfo", description="Show your statistics.")
+@crescent.command(name="profile", description="Show your, or another server member's, profile.")
 class InfoCommand:
     member = crescent.option(
         hikari.User,
@@ -57,12 +57,11 @@ class InfoCommand:
         description = f'\n<:wishfragments:1148459769980530740> Wish Fragments: **{currency}**\n\n🥅 Claims available: **{claims}**\n🎲 Rolls available: **{rolls}**'
         if character_list:
 
-            character_instance = await dbsearch.create_character_from_id(ctx, character_list[0])
+            character = await dbsearch.create_character_from_id(ctx, character_list[0])
 
-            if character_instance is None:
+            if character is None:
                 return
 
-            character = character_instance.character
             description = f'💛 Top character: **{character.first_name} {character.last_name}**\n📚 List size: **{len(character_list)}**' + \
                 description
         embed = hikari.embeds.Embed(
@@ -81,6 +80,9 @@ class InfoCommand:
                 resized_image = image.resize((112, 175))
                 resized_image.putalpha(MASK_IMAGE)
                 combined_image.paste(resized_image, (150 * index, 0))
+
+            if character is None:
+                return
 
             img_byte_arr = io.BytesIO()
             combined_image.save(img_byte_arr, format='PNG')

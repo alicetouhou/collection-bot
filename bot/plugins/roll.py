@@ -114,13 +114,13 @@ class RollCommand:
             wishlist_people_formatted += f"<@{id}> "
 
         view: miru.View = ClaimView(
-            timeout=180, character=picked_character.character)
+            timeout=180, character=picked_character)
 
         if claimed:
             view = FragmentView(
-                timeout=180, character=picked_character.character)
+                timeout=180, character=picked_character)
 
-        embed = picked_character.character.get_claimable_embed()
+        embed = picked_character.get_claimable_embed()
         embed.set_footer(
             f"{rolls - 1} roll{'s' if rolls != 2 else ''} remaining")
 
