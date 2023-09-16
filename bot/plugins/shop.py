@@ -35,10 +35,14 @@ class ViewCommand:
 async def autocomplete_response(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
 ) -> list[tuple[str, int]]:
+    options = ctx.options
     user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
     upgrades = await user.get_upgrade_shop_objects()
     combined_list = list(shop_items) + upgrades
-    return [(item.name, index) for index, item in enumerate(combined_list)]
+    output = [(item.name, index) for index, item in enumerate(combined_list)]
+    filtered_list = filter(
+        lambda x: options["item"].lower() in x[0].lower(), output)
+    return list(filtered_list)
 
 
 @shop_group.child
