@@ -52,7 +52,9 @@ class Upgrade(ShopItem):
 
     async def purchased(self, ctx: crescent.Context, user: 'User') -> bool:
         await user.increase_upgrade_level(self.type)
-        await super().purchased(ctx, user)
+        await ctx.respond(
+            f"You purchased **{self.cased_name()}**! Current level: `**Lv{self.level} → Lv{self.level+1}**`\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{(await user.currency) - self.price}**"
+        )
         return True
 
 

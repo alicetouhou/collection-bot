@@ -56,5 +56,5 @@ class ListCommand:
         else:
             character = character_list[0]
 
-            navigator = character.get_navigator()
+            navigator = await character.get_navigator()
             await navigator.send(ctx.interaction)

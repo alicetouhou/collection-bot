@@ -10,7 +10,7 @@ plugin = Plugin()
 
 
 @plugin.include
-@crescent.command(name="daily", description="Claim your daily character claims.")
+@crescent.command(name="daily", description="Claim your daily rewards (claims and wish fragments).")
 class ListCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
@@ -26,10 +26,12 @@ class ListCommand:
 
         if current_time - last_claim_time >= 86400:
             wishfragment_number = random.randint(
-                350 + number_of_claims * 200, 600 + number_of_claims * 200)
+                350 + (number_of_claims - 5) * 200, 600 + (number_of_claims - 5) * 200)
             current_claims = await user.claims
+            current_currency = await user.currency
             await user.set_claims(current_claims + number_of_claims)
             await user.set_daily_claimed_time(current_time)
+            await user.set_currency(current_currency + wishfragment_number)
             message = f"Daily claimed! **{number_of_claims}** claims have been added to your inventory, as well as <:wishfragments:1148459769980530740> **{wishfragment_number}** wish fragments. Next daily can be claimed in **24 hours**."
         else:
             diff = (last_claim_time + 86400) - current_time

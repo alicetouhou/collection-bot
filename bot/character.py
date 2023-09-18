@@ -55,7 +55,7 @@ class Character:
         filtered_series = filter(lambda x: x != '', series)
         return list(filtered_series)
 
-    def _get_embed(self, image) -> hikari.Embed:
+    async def _get_embed(self, image) -> hikari.Embed:
         name = self.first_name + " " + self.last_name
         description = f"ID `{self.id}` • {self.value}<:wishfragments:1148459769980530740>"
 
@@ -83,17 +83,17 @@ class Character:
 
         return embed
 
-    def get_navigator(self) -> nav.NavigatorView:
+    async def get_navigator(self) -> nav.NavigatorView:
         pages = []
 
         for image in self.images:
-            embed = self._get_embed(image)
+            embed = await self._get_embed(image)
             pages.append(embed)
 
         buttons = [nav.PrevButton(), nav.IndicatorButton(), nav.NextButton()]
         navigator = nav.NavigatorView(pages=pages, buttons=buttons)
         return navigator
 
-    def get_claimable_embed(self) -> hikari.Embed:
-        embed = self._get_embed(self.images[0])
+    async def get_claimable_embed(self) -> hikari.Embed:
+        embed = await self._get_embed(self.images[0])
         return embed

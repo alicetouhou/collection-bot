@@ -3,6 +3,8 @@ import asyncio
 import aiohttp
 import imagesize
 import io
+import typing as t
+
 
 async def get_image_size(url, session) -> tuple | None:
     try:
@@ -13,9 +15,10 @@ async def get_image_size(url, session) -> tuple | None:
             return image_size
     except Exception as e:
         print("Unable to get url {} due to {}.".format(url, e.__class__))
+        return None
 
 
-async def get_image_sizes(urls, offset, splice_length, name) -> list[str]:
+async def get_image_sizes(urls, offset, splice_length, name) -> list[list[t.Any]]:
     length = 0
 
     erratas = []
@@ -31,13 +34,14 @@ async def get_image_sizes(urls, offset, splice_length, name) -> list[str]:
             for url in array[0]:
                 size = await get_image_size(url, session)
                 iter += 1
-                if size[0]/size[1] < 0.62 or size[0]/size[1] > 0.67:
-                    #print(f"Errata found: Aspect ratio - {size[0]/size[1]} {iter}/{length} ({url})")
+                if size and (size[0]/size[1] < 0.62 or size[0]/size[1] > 0.67):
+                    # print(f"Errata found: Aspect ratio - {size[0]/size[1]} {iter}/{length} ({url})")
                     erratas.append([url, array[1]])
             if iter % 200 == 0:
                 print(f"{name}: {iter - offset}/{length}")
     print(f"Thread {name} Complete!")
-    return(erratas)
+    return (erratas)
+
 
 def get_urls(f):
     reader = csv.reader(f, delimiter="|")
@@ -51,22 +55,23 @@ def get_urls(f):
         index += 1
     return urls, data
 
+
 async def remove_wrong_erratas(f, filedata):
     erratas = await asyncio.gather(
-            get_image_sizes(urls, 0, 1999, "A"),
-            get_image_sizes(urls, 2000, 1999, "B"),
-            get_image_sizes(urls, 4000, 1999, "C"),
-            get_image_sizes(urls, 5000, 1999, "D"),
-            get_image_sizes(urls, 6000, 1999, "E"),
-            get_image_sizes(urls, 8000, 1999, "F"),
-            get_image_sizes(urls, 10000, 1499, "G"),
-            get_image_sizes(urls, 11500, 1999, "H"),
-            get_image_sizes(urls, 13500, 1999, "I"),
-            get_image_sizes(urls, 15500, 2499, "J"),
-            get_image_sizes(urls, 18000, 1508, "K"),
+        get_image_sizes(urls, 0, 1999, "A"),
+        get_image_sizes(urls, 2000, 1999, "B"),
+        get_image_sizes(urls, 4000, 1999, "C"),
+        get_image_sizes(urls, 5000, 1999, "D"),
+        get_image_sizes(urls, 6000, 1999, "E"),
+        get_image_sizes(urls, 8000, 1999, "F"),
+        get_image_sizes(urls, 10000, 1499, "G"),
+        get_image_sizes(urls, 11500, 1999, "H"),
+        get_image_sizes(urls, 13500, 1999, "I"),
+        get_image_sizes(urls, 15500, 2499, "J"),
+        get_image_sizes(urls, 18000, 1508, "K"),
 
-        )
-    
+    )
+
     combined_erratas = []
     for errata in erratas:
         combined_erratas += errata
@@ -86,7 +91,8 @@ async def remove_wrong_erratas(f, filedata):
         if row[4] == "":
             data.remove(row)
 
-    writer.writerow(("id", "first_name", "last_name", "anime_list", "pictures", "value", "manga_list", "games_list"))
+    writer.writerow(("id", "first_name", "last_name", "anime_list",
+                    "pictures", "value", "manga_list", "games_list"))
     writer.writerows(data)
 
 file = open("bot/data/db.csv", "r", encoding="utf8")

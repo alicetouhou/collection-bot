@@ -1,8 +1,15 @@
 import crescent
+import hikari
 
 from bot.model import Plugin
 
 plugin = Plugin()
+
+
+async def character_search_autocomplete(
+    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+) -> list[tuple[str, str]]:
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, option)
 
 
 @plugin.include
@@ -11,14 +18,20 @@ plugin = Plugin()
     description="Move a character to the top of your list, which sets your thumbnail image to them.",
 )
 class TopCommand:
-    id = crescent.option(int, "Enter a character's ID.", name="id")
+    search = crescent.option(
+        str,
+        "Search for a character by name, or ID. The given and family names can be in any order.",
+        name="search",
+        autocomplete=character_search_autocomplete,
+    )
 
     async def callback(self, ctx: crescent.Context) -> None:
         user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
-        val = await plugin.model.utils.validate_id_in_list(ctx, user, self.id)
-        if not val:
+        character = await plugin.model.utils.validate_search_in_list(ctx, user, self.search)
+
+        if not character:
             return
 
-        await user.reorder(val)
+        await user.reorder(character)
 
-        await ctx.respond(f"**{val.first_name} {val.last_name}** has been moved to the top of your list.")
+        await ctx.respond(f"**{character.first_name} {character.last_name}** has been moved to the top of your list.")

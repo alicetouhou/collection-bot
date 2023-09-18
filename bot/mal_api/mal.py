@@ -1,6 +1,5 @@
 import json
 import secrets
-
 import requests
 
 
@@ -50,7 +49,8 @@ def generate_new_token(authorisation_code: str, code_verifier: str) -> dict:
 # 4. Test the API by requesting your profile information
 def print_user_info(access_token: str):
     url = "https://api.myanimelist.net/v2/users/@me"
-    response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+    response = requests.get(
+        url, headers={"Authorization": f"Bearer {access_token}"})
 
     response.raise_for_status()
     user = response.json()

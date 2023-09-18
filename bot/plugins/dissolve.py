@@ -1,30 +1,34 @@
 import crescent
+import hikari
 
 from bot.model import Plugin
 
 plugin = Plugin()
 
 
+async def character_search_autocomplete(
+    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+) -> list[tuple[str, str]]:
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, option)
+
+
 @plugin.include
 @crescent.command(name="dissolve", description="Turn a character into wish fragments.")
 class DissolveCommand:
-    id = crescent.option(int, "Enter a character's ID.",
-                         name="id", min_value=1, max_value=2147483647)
+    search = crescent.option(
+        str,
+        "Search for a character by name, or ID. The given and family names can be in any order.",
+        name="search",
+        autocomplete=character_search_autocomplete,
+    )
 
     async def callback(self, ctx: crescent.Context) -> None:
         dbsearch = plugin.model.dbsearch
 
-        character = (await dbsearch.create_character_from_id(ctx, self.id))
         user = await dbsearch.create_user(ctx, ctx.user)
+        character = await plugin.model.utils.validate_search_in_list(ctx, user, self.search)
 
-        user_character_ids = await user.characters
-
-        if not character:
-            await ctx.respond(f"{self.id} is not a valid ID!")
-            return
-
-        if self.id not in user_character_ids:
-            await ctx.respond(f"**{character.first_name} {character.last_name}** is not in your list!")
+        if character is None:
             return
 
         current_currency = await user.currency

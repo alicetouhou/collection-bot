@@ -120,7 +120,7 @@ class RollCommand:
             view = FragmentView(
                 timeout=180, character=picked_character)
 
-        embed = picked_character.get_claimable_embed()
+        embed = await picked_character.get_claimable_embed()
         embed.set_footer(
             f"{rolls - 1} roll{'s' if rolls != 2 else ''} remaining")
 

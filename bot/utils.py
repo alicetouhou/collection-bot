@@ -32,6 +32,24 @@ class Utils:
 
         return selected_character
 
+    async def validate_search_in_list(self, ctx: crescent.Context, user: User, char_search: str) -> Character | None:
+        selected_character = await self.model.dbsearch.create_character_from_search(ctx, char_search)
+        user_character_ids = await user.characters
+
+        if len(selected_character) == 0:
+            await ctx.respond(f"Your query `{char_search}` did not return any results.")
+            return None
+
+        if len(selected_character) > 1:
+            await ctx.respond(f"Your query `{char_search}` returned more than one result.")
+            return None
+
+        if selected_character[0].id not in user_character_ids:
+            await ctx.respond(f"**{selected_character[0].first_name} {selected_character[0].last_name}** is not in your list!")
+            return None
+
+        return selected_character[0]
+
     async def add_characters_to_db(self) -> None:
         if self.model.dbpool is None:
             return

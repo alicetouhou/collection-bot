@@ -113,7 +113,6 @@ class TradeCommand:
 class TradeConfirmCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
-        utils = plugin.model.utils
         dbsearch = plugin.model.dbsearch
 
         id_list = current_trades.keys()

@@ -20,14 +20,14 @@ class ListCommand:
 
         user = await dbsearch.create_user(ctx, ctx.user)
 
-        claim_time = int(await user.get_upgrade_value(Upgrades.ROLL_REGEN))
+        regeneration_rate = int(await user.get_upgrade_value(Upgrades.ROLL_REGEN))
         roll_max = int(await user.get_upgrade_value(Upgrades.ROLL_MAX))
 
         last_claim_time = await user.rolls_claimed_time
         current_time = int(time.time())
         message = ""
 
-        stockpile = int((current_time - last_claim_time) / 60 / 15)
+        stockpile = int((current_time - last_claim_time) / regeneration_rate)
 
         if (last_claim_time) == 0:
             stockpile = 10
@@ -37,10 +37,11 @@ class ListCommand:
             rolls_to_be_claimed = 10
         else:
             rolls_to_be_claimed = min(stockpile, roll_max)
-            last_regeneration = last_claim_time + stockpile * claim_time
-            regenerate_time = claim_time - (current_time - last_regeneration)
+            last_regeneration = last_claim_time + stockpile * regeneration_rate
+            regenerate_time = regeneration_rate - \
+                (current_time - last_regeneration)
             await user.set_rolls_claimed_time(last_regeneration)
             await user.set_rolls((await user.rolls) + rolls_to_be_claimed)
-        message = f"{rolls_to_be_claimed} rolls have been claimed.\nNext roll regenerates in: **{int(regenerate_time/60)}** minutes and **{regenerate_time % 60}** seconds"
+        message = f"{rolls_to_be_claimed} roll{'s' if rolls_to_be_claimed != 1 else ''} have been claimed.\nNext roll regenerates in: **{int(regenerate_time/60)}** minutes and **{regenerate_time % 60}** seconds"
 
         await ctx.respond(message)
