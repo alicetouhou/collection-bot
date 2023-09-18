@@ -8,6 +8,7 @@ import psycopg2
 import requests
 import dotenv
 import os
+import asyncio
 
 dotenv.load_dotenv()
 
@@ -21,7 +22,7 @@ class Character:
     anime = ""
     manga = ""
     game = ""
-    images = []
+    images: list[str] = []
     favorites = 0
     value = 0
     id = 0
@@ -52,7 +53,8 @@ class Character:
 
     def get_value(self) -> int:
         if int(self.favorites) > 0:
-            value = max(math.floor(200 * math.log(int(self.favorites), 10) - 100), 15)
+            value = max(math.floor(
+                200 * math.log(int(self.favorites), 10) - 100), 15)
             if value == 15:
                 return int(math.pow(random.random(), 3) * 22 + 15)
             return value
@@ -72,8 +74,8 @@ class Series:
 
 
 class CharacterParser(HTMLParser):
-    id_list = []
-    favorites_list = []
+    id_list: list[str] = []
+    favorites_list: list[str] = []
 
     def handle_starttag(self, tag, attrs) -> None:
         if tag == "a":
@@ -94,12 +96,14 @@ class CharacterParser(HTMLParser):
 
 
 def get_top_anime_ids(amount, offset, type="anime"):
-    x = requests.get(f'https://api.myanimelist.net/v2/{type}/ranking?ranking_type=bypopularity&limit={amount}&offset={offset}', headers = HEADERS)
+    x = requests.get(
+        f'https://api.myanimelist.net/v2/{type}/ranking?ranking_type=bypopularity&limit={amount}&offset={offset}', headers=HEADERS)
     anime_json = json.loads(x.text)
 
     output = []
     for anime in anime_json["data"]:
-        output.append(Series(id=anime["node"]["id"], title=anime["node"]["title"]))
+        output.append(
+            Series(id=anime["node"]["id"], title=anime["node"]["title"]))
 
     return output
 
@@ -107,15 +111,17 @@ def get_top_anime_ids(amount, offset, type="anime"):
 def get_series_by_ids(ids: list[int], type="anime"):
     output = []
     for id in ids:
-        x = requests.get(f"https://api.myanimelist.net/v2/{type}/{id}", headers=HEADERS)
+        x = requests.get(
+            f"https://api.myanimelist.net/v2/{type}/{id}", headers=HEADERS)
         series_json = json.loads(x.text)
         output.append(Series(id=series_json["id"], title=series_json["title"]))
     return output
 
 
-def get_anime_characters(anime: Series, type="anime", game_override="", favorites_scale=1):
+async def get_anime_characters(anime: Series, type="anime", game_override="", favorites_scale=1):
     character_list = []
-    anime_html = requests.get(f"https://myanimelist.net/{type}/{anime.id}/x/characters")
+    anime_html = requests.get(
+        f"https://myanimelist.net/{type}/{anime.id}/x/characters")
     parser = CharacterParser()
     parser.id_list = []
     parser.favorites_list = []
@@ -178,7 +184,7 @@ def get_anime_characters(anime: Series, type="anime", game_override="", favorite
     return character_list
 
 
-def save_to_db(database, character_list: list[Character], type="anime") -> None:
+async def save_to_db(database, character_list: list[Character], type="anime") -> None:
     cursor = database.cursor()
     for character in character_list:
         if type == "anime":
@@ -255,7 +261,8 @@ def save_to_db(database, character_list: list[Character], type="anime") -> None:
                 },
             )
 
-    outputquery = "COPY ({0}) TO STDOUT WITH DELIMITER '|' CSV HEADER".format("SELECT * FROM CHARACTERS")
+    outputquery = "COPY ({0}) TO STDOUT WITH DELIMITER '|' CSV HEADER".format(
+        "SELECT * FROM CHARACTERS")
     with open(os.environ["FILE_PATH"], "w", encoding="utf-8") as f:
         cursor.copy_expert(outputquery, f)
 
@@ -263,7 +270,7 @@ def save_to_db(database, character_list: list[Character], type="anime") -> None:
     cursor.close()
 
 
-def main():
+async def main():
     database = psycopg2.connect(
         database="characters",
         host="localhost",
@@ -279,18 +286,20 @@ def main():
         "CREATE TABLE IF NOT EXISTS CHARACTERS(ID int, first_name varchar(255), last_name varchar(255), anime_list varchar(1027), pictures varchar(2055), value int, manga_list varchar(1027), games_list varchar(1027), PRIMARY KEY (ID))"
     )
 
-    extras = [8557, 39071, 18897]
-    #anime_list = get_series_by_ids(extras, type="anime")
-    # anime_list = get_top_anime_ids(25,656,type="anime")
-    # for anime in anime_list:
-    #     characters = get_anime_characters(anime, type="anime")
-    #     save_to_db(database, characters, type="anime")
+    extras = []
+    # anime_list = get_series_by_ids(extras, type="anime")
+    anime_list = get_top_anime_ids(25, 656, type="anime")
+    async with asyncio.TaskGroup() as tg:
+        for anime in anime_list:
+            characters = tg.create_task(
+                get_anime_characters(anime, type="anime"))
+            tg.create_task(save_to_db(database, characters, type="anime"))
 
-    manga_list = [100035]
-    manga_list = get_series_by_ids(manga_list, type="manga")
-    for manga in manga_list:
-        characters = get_anime_characters(manga,type="manga")
-        save_to_db(database, characters,type="manga")
+    # manga_list = [100035]
+    # manga_list = get_series_by_ids(manga_list, type="manga")
+    # for manga in manga_list:
+    #     characters = get_anime_characters(manga, type="manga")
+    #     save_to_db(database, characters, type="manga")
 
     # games_list_a = [51105]
     # games_list_m = []
@@ -303,4 +312,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

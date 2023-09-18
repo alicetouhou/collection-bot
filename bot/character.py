@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import math
 import typing as t
+import copy
 
 import asyncpg
 
 import hikari
-import miru
 from miru.ext import nav
 
 
@@ -56,39 +55,43 @@ class Character:
         return list(filtered_series)
 
     async def _get_embed(self, image) -> hikari.Embed:
-        name = self.first_name + " " + self.last_name
-        description = f"ID `{self.id}` • {self.value}<:wishfragments:1148459769980530740>"
+        name = f"{self.first_name} {self.last_name} • {self.value}<:wishfragments:1148459769980530740>"
 
         anime_list = sorted(self.anime)
         manga_list = sorted(self.manga)
         games_list = sorted(self.games)
-        animeography = ""
+        series_list = []
         count = 0
         for manga in manga_list:
-            animeography += f"📖 {manga}\n" if manga != "" and count <= 4 else ""
-            count += 1
+            if manga != "":
+                series_list.append(f"📖 {manga}")
         for anime in anime_list:
-            animeography += f"🎬 {anime}\n" if anime != "" and count <= 4 else ""
-            count += 1
+            if anime != "":
+                series_list.append(f"🎬 {anime}")
         for game in games_list:
-            animeography += f"🎮 {game}\n" if game != "" and count <= 4 else ""
-            count += 1
-        if count >= 4:
-            animeography += f"*and {count-4} more..*"
+            if game != "":
+                series_list.append(f"🎮 {game}")
+
+        extra_length = len(self.get_series()) - 4
+
+        if extra_length > 0:
+            series_list = series_list[:4]
+            series_list.append(f"*and {extra_length} more..*")
 
         embed = hikari.Embed(title=name, color="f598df",
-                             description=description)
+                             description="\n".join(series_list))
         embed.set_image(image)
-        embed.add_field(name="Appears in:", value=animeography)
 
         return embed
 
     async def get_navigator(self) -> nav.NavigatorView:
         pages = []
+        embed = await self._get_embed(self.images[0])
 
         for image in self.images:
-            embed = await self._get_embed(image)
-            pages.append(embed)
+            new_embed = copy.deepcopy(embed)
+            new_embed.set_image(image)
+            pages.append(new_embed)
 
         buttons = [nav.PrevButton(), nav.IndicatorButton(), nav.NextButton()]
         navigator = nav.NavigatorView(pages=pages, buttons=buttons)
