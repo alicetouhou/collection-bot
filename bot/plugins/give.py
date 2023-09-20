@@ -27,13 +27,16 @@ class GiveCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         dbsearch = plugin.model.dbsearch
 
-        user_a = await dbsearch.create_user(ctx, ctx.user)
+        if not ctx.guild_id:
+            return None
+
+        user_a = await dbsearch.create_user(ctx.guild_id, ctx.user)
         character = await plugin.model.utils.validate_search_in_list(ctx, user_a, self.search)
 
         if character is None:
             return
 
-        user_b = await dbsearch.create_user(ctx, self.member)
+        user_b = await dbsearch.create_user(ctx.guild_id, self.member)
 
         description = ""
         description += f"`{character.id}` {character.first_name} {character.last_name} was traded from {ctx.user.mention} to {self.member.mention}\n"

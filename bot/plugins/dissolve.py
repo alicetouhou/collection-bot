@@ -25,7 +25,10 @@ class DissolveCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         dbsearch = plugin.model.dbsearch
 
-        user = await dbsearch.create_user(ctx, ctx.user)
+        if not ctx.guild_id:
+            return
+
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
         character = await plugin.model.utils.validate_search_in_list(ctx, user, self.search)
 
         if character is None:

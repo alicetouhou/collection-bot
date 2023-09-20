@@ -14,8 +14,11 @@ MASK_IMAGE = Image.open('bot/data/mask.png').convert('L')
 
 
 async def open_image_from_char_id(ctx: crescent.Context, character_id: int) -> io.BytesIO | None:
+    if not ctx.guild_id:
+        return None
+
     try:
-        character = await plugin.model.dbsearch.create_character_from_id(ctx, character_id)
+        character = await plugin.model.dbsearch.create_character_from_id(ctx.guild_id, character_id)
 
         if character is None:
             return None
@@ -44,7 +47,10 @@ class InfoCommand:
         assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
 
-        user = await dbsearch.create_user(ctx, ctx.user if self.member is None else self.member)
+        if not ctx.guild_id:
+            return
+
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user if self.member is None else self.member)
 
         claims, rolls, character_list, currency, upgrades = await asyncio.gather(
             user.claims,
@@ -57,7 +63,7 @@ class InfoCommand:
         description = f'\n<:wishfragments:1148459769980530740> Wish Fragments: **{currency}**\n\n🥅 Claims available: **{claims}**\n🎲 Rolls available: **{rolls}**'
         if character_list:
 
-            character = await dbsearch.create_character_from_id(ctx, character_list[0])
+            character = await dbsearch.create_character_from_id(ctx.guild_id, character_list[0])
 
             if character is None:
                 return

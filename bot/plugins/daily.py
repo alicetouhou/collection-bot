@@ -16,7 +16,7 @@ class ListCommand:
         assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
 
-        user = await dbsearch.create_user(ctx, ctx.user)
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
 
         last_claim_time = await user.daily_claimed_time
         current_time = int(time.time())
