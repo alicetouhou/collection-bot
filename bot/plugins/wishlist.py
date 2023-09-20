@@ -5,6 +5,7 @@ import hikari
 
 from bot.model import Plugin
 from bot.upgrades import Upgrades
+from bot.utils import guild_only
 
 plugin = Plugin()
 
@@ -19,6 +20,7 @@ async def character_search_autocomplete(
 
 @plugin.include
 @wishlist_group.child
+@crescent.hook(guild_only)
 @crescent.command(name="list", description="View your or another server member's wishes.")
 class WishListCommand:
     member = crescent.option(
@@ -29,16 +31,17 @@ class WishListCommand:
     )
 
     async def callback(self, ctx: crescent.Context) -> None:
-        dbsearch = plugin.model.dbsearch
+        assert ctx.guild_id
 
-        user = await dbsearch.create_user(ctx, ctx.user if self.member is None else self.member)
+        dbsearch = plugin.model.dbsearch
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user if self.member is None else self.member)
 
         wishlist = await user.wishlist
         wishlist_size = await user.get_upgrade_value(Upgrades.WISHLIST_SIZE)
 
         character_list = []
         for character_id in wishlist:
-            character_instance = await dbsearch.create_character_from_id(ctx, character_id)
+            character_instance = await dbsearch.create_character_from_id(ctx.guild_id, character_id)
 
             if character_instance is not None:
                 character_list.append(character_instance)
@@ -46,14 +49,14 @@ class WishListCommand:
         description = ""
         for character in character_list:
             description += f"`{'0' * (6 - int(math.log(character.id, 10) + 1))}{character.id}` {character.first_name} {character.last_name}\n"
-        embed = hikari.Embed(
-            title=f"{user.name}'s Characters", color="f598df", description=description)
+        embed = hikari.Embed(title=f"{user.name}'s Characters", color="f598df", description=description)
         embed.set_footer(f"{len(character_list)}/{wishlist_size} slots full")
         await ctx.respond(embed)
 
 
 @plugin.include
 @wishlist_group.child
+@crescent.hook(guild_only)
 @crescent.command(name="add", description="Add a character to your wishlist.")
 class WishAddCommand:
     search = crescent.option(
@@ -64,15 +67,20 @@ class WishAddCommand:
     )
 
     async def callback(self, ctx: crescent.Context) -> None:
+        assert ctx.guild_id
+
         dbsearch = plugin.model.dbsearch
-        user = await dbsearch.create_user(ctx, ctx.user)
+
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
 
         user_character_ids = await user.wishlist
         wishlist_size = await user.get_upgrade_value(Upgrades.WISHLIST_SIZE)
         character_list = await dbsearch.create_character_from_search(ctx, self.search)
 
         if len(character_list) != 1:
-            await ctx.respond(f"You may only add one character to your wishlist at a time. Make sure your search returns a unique value.")
+            await ctx.respond(
+                f"You may only add one character to your wishlist at a time. Make sure your search returns a unique value."
+            )
             return None
 
         character = character_list[0]
@@ -92,6 +100,7 @@ class WishAddCommand:
 
 @plugin.include
 @wishlist_group.child
+@crescent.hook(guild_only)
 @crescent.command(name="remove", description="Remove a character from your wishlist.")
 class WishRemoveCommand:
     search = crescent.option(
@@ -102,14 +111,18 @@ class WishRemoveCommand:
     )
 
     async def callback(self, ctx: crescent.Context) -> None:
+        assert ctx.guild_id
+
         dbsearch = plugin.model.dbsearch
-        user = await dbsearch.create_user(ctx, ctx.user)
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
         character_list = await dbsearch.create_character_from_search(ctx, self.search)
 
         user_character_ids = await user.wishlist
 
         if len(character_list) != 1:
-            await ctx.respond(f"You may only remove one character to your wishlist at a time. Make sure your search returns a unique value.")
+            await ctx.respond(
+                f"You may only remove one character to your wishlist at a time. Make sure your search returns a unique value."
+            )
             return None
 
         character = character_list[0]

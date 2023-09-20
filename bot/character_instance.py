@@ -1,12 +1,15 @@
 from __future__ import annotations
 import hikari
+import typing as t
 from bot.character import Character
 
+if t.TYPE_CHECKING:
+    from bot.model import Model
 
 class CharacterInstance(Character):
-    def __init__(self, guild: hikari.Guild, character: Character, model):
-        self.guild = guild
-        self._guild_str = f"players_{hikari.Snowflake(guild.id)}"
+    def __init__(self, guild_id: hikari.Snowflake, character: Character, model: Model):
+        self.guild_id = guild_id
+        self._guild_str = f"players_{guild_id}"
         self.model = model
         super().__init__(
             first_name=character.first_name,
@@ -40,11 +43,11 @@ class CharacterInstance(Character):
     async def _get_embed(self, image) -> hikari.Embed:
         embed = await super()._get_embed(image)
         claimed_person_id = await self.get_claimed_id()
-        if not self.guild or claimed_person_id == 0:
+        if claimed_person_id == 0:
             return embed
-        claimed_person = self.guild.get_member(claimed_person_id)
+        claimed_person = self.model.bot.cache.get_member(self.guild_id, claimed_person_id)
         if not claimed_person:
-            claimed_person = await self.model.bot.rest.fetch_member(self.guild, claimed_person_id)
+            claimed_person = await self.model.bot.rest.fetch_member(self.guild_id, claimed_person_id)
         if claimed_person:
             embed.set_footer(f"Claimed by {claimed_person.username}", icon=claimed_person.avatar_url)
 

@@ -7,8 +7,9 @@ import hikari
 
 from bot.character import Character
 from bot.model import Plugin
+from bot.utils import guild_only
 
-plugin = Plugin()
+plugin = Plugin(command_hooks=[guild_only])
 
 
 class Trade:
@@ -76,8 +77,7 @@ async def character_search_autocomplete(
 @trade_group.child
 @crescent.command(name="begin", description="Start a trade with another player.")
 class TradeCommand:
-    member = crescent.option(
-        hikari.User, "Enter a server member's @.", name="username")
+    member = crescent.option(hikari.User, "Enter a server member's @.", name="username")
 
     async def callback(self, ctx: crescent.Context) -> None:
         other_user = self.member
@@ -86,8 +86,7 @@ class TradeCommand:
             await ctx.respond("You cannot trade with yourself!")
             return
 
-        trade_id = "".join(random.choices(
-            string.ascii_uppercase + string.digits, k=10))
+        trade_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
 
         current_trades[trade_id] = Trade(ctx.user, other_user)
 
@@ -112,7 +111,7 @@ class TradeCommand:
 )
 class TradeConfirmCommand:
     async def callback(self, ctx: crescent.Context) -> None:
-        assert ctx.guild_id is not None
+        assert ctx.guild_id
         dbsearch = plugin.model.dbsearch
 
         id_list = current_trades.keys()
@@ -139,8 +138,8 @@ class TradeConfirmCommand:
         if current_trade.a_confirmed is False or current_trade.b_confirmed is False:
             return
 
-        user_a = await dbsearch.create_user(ctx, current_trade.a)
-        user_b = await dbsearch.create_user(ctx, current_trade.b)
+        user_a = await dbsearch.create_user(ctx.guild_id, current_trade.a)
+        user_b = await dbsearch.create_user(ctx.guild_id, current_trade.b)
 
         description = ""
         if len(current_trade.a_list) >= 1:
@@ -148,8 +147,7 @@ class TradeConfirmCommand:
         if len(current_trade.b_list) >= 1:
             description += f"{character_list_str(current_trade.b_list,split=',')} traded from {current_trade.b.mention} to {current_trade.a.mention}"
 
-        embed = hikari.Embed(title="Trade Complete!",
-                             color="f598df", description=description)
+        embed = hikari.Embed(title="Trade Complete!", color="f598df", description=description)
 
         await ctx.respond(embed)
 
@@ -197,9 +195,11 @@ class TradeAddCommand:
     )
 
     async def callback(self, ctx: crescent.Context) -> None:
+        assert ctx.guild_id
+
         utils = plugin.model.utils
         dbsearch = plugin.model.dbsearch
-        user = await dbsearch.create_user(ctx, ctx.user)
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
 
         # Find trade id
         id_list = current_trades.keys()
@@ -217,7 +217,9 @@ class TradeAddCommand:
         character_list = await dbsearch.create_character_from_search(ctx, self.search)
 
         if len(character_list) != 1:
-            await ctx.respond("You may only add one character to trade at a time. Make sure your search returns a unique value.")
+            await ctx.respond(
+                "You may only add one character to trade at a time. Make sure your search returns a unique value."
+            )
             return
 
         character = await utils.validate_id_in_list(ctx, user, character_list[0].id)

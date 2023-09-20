@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Model:
     def __init__(self, bot: hikari.GatewayBot) -> None:
         self.guilds: list[hikari.Snowflake] = []
-        self.dbpool = None
+        self._dbpool = None
         self.bot = bot
         self.utils = Utils(self)
         self.dbsearch = DBSearch(self)
@@ -45,15 +45,14 @@ class Model:
         guilds = self.guilds
         logger.info(f"Current guilds: {guilds}")
 
-        self.dbpool = await asyncpg.create_pool(
+        self._dbpool = await asyncpg.create_pool(
             dsn=f"postgresql://{os.environ['DATABASE_USER']}:{os.environ['DATABASE_PASSWORD']}@{os.environ['DATABASE_HOST']}:{os.environ['DATABASE_PORT']}/{os.environ['DATABASE']}",
         )
 
-        if self.dbpool is None:
+        if self._dbpool is None:
             return
 
         async with self.dbpool.acquire() as conn:
-
             await conn.execute("CREATE TABLE IF NOT EXISTS servers (ID varchar(31), PRIMARY KEY (ID))")
 
             for guild_id in guilds:
@@ -61,6 +60,11 @@ class Model:
                     f"CREATE TABLE IF NOT EXISTS players_{guild_id} (ID varchar(31), characters varchar(65535), currency int, claims int, claimed_daily int, rolls int, claimed_rolls int, wishlist varchar(1027), upgrades varchar(2055), PRIMARY KEY (ID))"
                 )
                 await conn.execute(f"INSERT INTO servers VALUES ({guild_id}) ON CONFLICT DO NOTHING")
+
+    @property
+    def dbpool(self) -> asyncpg.Pool:
+        assert self._dbpool, "DBPool should have been created"
+        return self._dbpool
 
     async def on_starting(self, _: hikari.StartingEvent) -> None:
         """
