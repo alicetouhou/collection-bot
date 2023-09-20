@@ -1,25 +1,12 @@
 from __future__ import annotations
-
-import math
-import typing as t
-
-import asyncpg
-
 import hikari
-import crescent
-import miru
-from miru.ext import nav
 from bot.character import Character
 
 
 class CharacterInstance(Character):
-    def __init__(self, ctx: crescent.Context, character: Character, model):
-        if ctx.guild_id is None:
-            return
-
-        self.ctx = ctx
-        self.guild = hikari.Snowflake(ctx.guild_id)
-        self._guild_str = f"players_{hikari.Snowflake(ctx.guild_id)}"
+    def __init__(self, guild: hikari.Guild, character: Character, model):
+        self.guild = guild
+        self._guild_str = f"players_{hikari.Snowflake(guild.id)}"
         self.model = model
         super().__init__(
             first_name=character.first_name,
@@ -29,7 +16,7 @@ class CharacterInstance(Character):
             games=character.games,
             images=character.images,
             id=character.id,
-            favorites=character.value
+            favorites=character.value,
         )
 
     async def _select_user_ids_from_list(self, list) -> list[int]:
@@ -53,14 +40,12 @@ class CharacterInstance(Character):
     async def _get_embed(self, image) -> hikari.Embed:
         embed = await super()._get_embed(image)
         claimed_person_id = await self.get_claimed_id()
-        if not self.ctx.guild or claimed_person_id == 0:
+        if not self.guild or claimed_person_id == 0:
             return embed
-        claimed_person = self.ctx.guild.get_member(claimed_person_id)
+        claimed_person = self.guild.get_member(claimed_person_id)
         if not claimed_person:
-            claimed_person = await self.model.bot.rest.fetch_member(
-                self.ctx.guild, claimed_person_id)
+            claimed_person = await self.model.bot.rest.fetch_member(self.guild, claimed_person_id)
         if claimed_person:
-            embed.set_footer(
-                f"Claimed by {claimed_person.username}", icon=claimed_person.avatar_url)
+            embed.set_footer(f"Claimed by {claimed_person.username}", icon=claimed_person.avatar_url)
 
         return embed

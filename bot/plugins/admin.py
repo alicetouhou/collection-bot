@@ -8,7 +8,6 @@ plugin = Plugin()
 
 admin_group = crescent.Group("admin")
 
-
 @plugin.include
 @admin_group.child
 @crescent.command(
