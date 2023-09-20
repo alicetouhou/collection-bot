@@ -9,7 +9,7 @@ plugin = Plugin()
 async def character_search_autocomplete(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
 ) -> list[tuple[str, str]]:
-    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, option)
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx)
 
 
 @plugin.include

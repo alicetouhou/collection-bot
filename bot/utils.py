@@ -134,7 +134,7 @@ class Utils:
         return output
 
     async def character_search_in_list_autocomplete(
-        self, ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption, char_filter=None,
+        self, ctx: crescent.AutocompleteContext, option: str = "search", char_filter=None,
     ) -> list[tuple[str, str]]:
 
         if not ctx.guild_id:
@@ -146,7 +146,7 @@ class Utils:
             char_filter = await user.characters
         character_list = await self.model.dbsearch.create_character_from_search(
             ctx.guild_id,
-            options["search"],
+            options[option],
             filter=char_filter
         )
 
