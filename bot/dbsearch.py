@@ -15,11 +15,11 @@ class DBSearch:
         await user.add_player_to_db()
         return user
 
-    async def create_character(self, guild: hikari.Guild, character: Character) -> CharacterInstance:
-        instance = CharacterInstance(guild, character, self.model)
+    async def create_character(self, guild_id: hikari.Snowflake, character: Character) -> CharacterInstance:
+        instance = CharacterInstance(guild_id, character, self.model)
         return instance
 
-    async def create_character_from_id(self, guild: hikari.Guild, id: int) -> CharacterInstance | None:
+    async def create_character_from_id(self, guild_id: hikari.Snowflake, id: int) -> CharacterInstance | None:
         """Returns `Character` if one exists with the ID. Otherwise, `None` is returned."""
         try:
             records = await self.model.dbpool.fetch(
@@ -27,7 +27,7 @@ class DBSearch:
                 id,
             )
             character = Character.from_record(records[0])
-            instance = CharacterInstance(guild, character, self.model)
+            instance = CharacterInstance(guild_id, character, self.model)
             return instance
         except IndexError:
             return None

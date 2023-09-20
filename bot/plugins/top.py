@@ -2,6 +2,7 @@ import crescent
 import hikari
 
 from bot.model import Plugin
+from bot.utils import guild_only
 
 plugin = Plugin()
 
@@ -13,6 +14,7 @@ async def character_search_autocomplete(
 
 
 @plugin.include
+@crescent.hook(guild_only)
 @crescent.command(
     name="top",
     description="Move a character to the top of your list, which sets your thumbnail image to them.",
@@ -26,7 +28,9 @@ class TopCommand:
     )
 
     async def callback(self, ctx: crescent.Context) -> None:
-        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
+        assert ctx.guild_id
+
+        user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
         character = await plugin.model.utils.validate_search_in_list(ctx, user, self.search)
 
         if not character:

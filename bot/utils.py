@@ -11,6 +11,17 @@ if t.TYPE_CHECKING:
     from bot.model import Model
 
 
+# NOTE: This is used outside this file.
+CAN_NOT_BE_USED_OUTSID_GUILD_MESSAGE = "You must in a guild to use this command."
+
+
+async def guild_only(ctx: crescent.Context) -> crescent.HookResult | None:
+    if not ctx.guild_id:
+        await ctx.respond(CAN_NOT_BE_USED_OUTSID_GUILD_MESSAGE)
+        return crescent.HookResult(exit=True)
+    return None
+
+
 class Utils:
     """A class containing utility functions for the bot."""
 
@@ -18,7 +29,10 @@ class Utils:
         self.model: Model = model
 
     async def validate_id_in_list(self, ctx: crescent.Context, user: User, char_id: int) -> Character | None:
-        selected_character = await self.model.dbsearch.create_character_from_id(ctx, char_id)
+        if not ctx.guild_id:
+            return None
+
+        selected_character = await self.model.dbsearch.create_character_from_id(ctx.guild_id, char_id)
 
         user_character_ids = await user.characters
 
@@ -98,6 +112,9 @@ class Utils:
         self, ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
     ) -> list[tuple[str, str]]:
         options = ctx.options
+
+        if len(options["search"]) == 0:
+            return []
 
         character_list = await self.model.dbsearch.create_character_from_search(ctx, options["search"])
 

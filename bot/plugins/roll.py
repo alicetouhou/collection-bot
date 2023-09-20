@@ -9,6 +9,7 @@ import random
 from bot.character import Character
 from bot.upgrades import Upgrades
 from bot.model import Plugin
+from bot.utils import CAN_NOT_BE_USED_OUTSID_GUILD_MESSAGE
 
 plugin = Plugin()
 
@@ -149,7 +150,7 @@ async def roll_command(
     send_error: t.Callable[[str], t.Awaitable[None]],
 ):
     if not guild_id:
-        await send_error("You must in a guild to use this command.")
+        await send_error(CAN_NOT_BE_USED_OUTSID_GUILD_MESSAGE)
         return
 
     guild = plugin.app.cache.get_guild(guild_id) or await plugin.app.rest.fetch_guild(guild_id)
