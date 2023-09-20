@@ -153,12 +153,10 @@ async def roll_command(
         await send_error(CAN_NOT_BE_USED_OUTSID_GUILD_MESSAGE)
         return
 
-    guild = plugin.app.cache.get_guild(guild_id) or await plugin.app.rest.fetch_guild(guild_id)
-
     dbsearch = plugin.model.dbsearch
 
     user, picked_character = await asyncio.gather(
-        dbsearch.create_user(guild.id, user), dbsearch.create_random_character(guild)
+        dbsearch.create_user(guild_id, user), dbsearch.create_random_character(guild_id)
     )
 
     rolls, bonus, claimed, wishlist_people = await asyncio.gather(
@@ -173,7 +171,7 @@ async def roll_command(
         if random_number < bonus:
             wishlist = await user.wishlist
             random_index = random.choice(wishlist)
-            new_character = await dbsearch.create_character_from_id(guild, random_index)
+            new_character = await dbsearch.create_character_from_id(guild_id, random_index)
 
             if new_character is not None:
                 picked_character = new_character
