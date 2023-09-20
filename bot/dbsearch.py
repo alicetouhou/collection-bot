@@ -32,11 +32,13 @@ class DBSearch:
         except IndexError:
             return None
 
-    async def create_character_from_search(self, ctx, search: str, limit=20, filter=None) -> list[CharacterInstance]:
+    async def create_character_from_search(
+        self, guild_id: hikari.Snowflake, search: str, limit=20, filter=None
+    ) -> list[CharacterInstance]:
         search_split = search.split(" ")
 
         if len(search_split) == 1 and re.match("\d+", search_split[0]):
-            id_character = await self.create_character_from_id(ctx, int(search_split[0]))
+            id_character = await self.create_character_from_id(guild_id, int(search_split[0]))
 
             if id_character and (filter == None or id_character.id in filter):
                 return [id_character]
@@ -76,7 +78,7 @@ class DBSearch:
 
         output = []
         for record in records:
-            output.append(CharacterInstance(ctx, Character.from_record(record), self.model))
+            output.append(CharacterInstance(guild_id, Character.from_record(record), self.model))
 
         return output
 
