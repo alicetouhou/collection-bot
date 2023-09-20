@@ -79,7 +79,8 @@ class Utils:
             data = []
             for x in reader:
                 try:
-                    data.append([int(x[0]), x[1], x[2], x[3], x[4], int(x[5]), x[6], x[7]])
+                    data.append([int(x[0]), x[1], x[2], x[3],
+                                x[4], int(x[5]), x[6], x[7]])
                 except IndexError:
                     print(f"Error adding: {x}")
 
@@ -140,7 +141,7 @@ class Utils:
             ctx,
             options["search"],
             filter=char_filter
-
+        )
 
         output = []
         for character in character_list:
