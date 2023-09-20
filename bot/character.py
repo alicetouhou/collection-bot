@@ -100,3 +100,8 @@ class Character:
     async def get_claimable_embed(self) -> hikari.Embed:
         embed = await self._get_embed(self.images[0])
         return embed
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Character):
+            return self.id == other.id
+        return False

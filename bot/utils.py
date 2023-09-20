@@ -133,12 +133,14 @@ class Utils:
             return []
 
         options = ctx.options
-        user = await self.model.dbsearch.create_user(ctx.guild_id, ctx.user)
-        user_characters = await user.characters
-
+        user = await self.model.dbsearch.create_user(ctx, ctx.user)
+        if char_filter is None:
+            char_filter = await user.characters
         character_list = await self.model.dbsearch.create_character_from_search(
-            ctx, options["search"], filter=user_characters
-        )
+            ctx,
+            options["search"],
+            filter=char_filter
+
 
         output = []
         for character in character_list:
