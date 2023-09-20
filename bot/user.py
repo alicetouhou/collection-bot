@@ -143,7 +143,6 @@ class User:
                 stringified_value,
                 str(self.player_id),
             )
-        return value
 
     async def _append_to_chararacter_list(self, list: list[int], character: Character, field: str, index=None) -> None:
         if self.model.dbpool is None:
