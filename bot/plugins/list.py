@@ -27,7 +27,7 @@ class ListCommand:
     search = crescent.option(
         str,
         "Enter the character's name, ID, and/or the name of series they appear in.",
-        name="filter",
+        name="search",
         autocomplete=character_search_autocomplete,
         default=None
     )
@@ -35,8 +35,8 @@ class ListCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
-        user = await dbsearch.create_user(ctx, ctx.user if self.member is None else self.member)
-        character_list = [await dbsearch.create_character_from_id(ctx, x) for x in await user.characters]
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user if self.member is None else self.member)
+        character_list = [await dbsearch.create_character_from_id(ctx.guild_id, x) for x in await user.characters]
 
         if character_list[0] is None:
             return
@@ -45,7 +45,7 @@ class ListCommand:
 
         if self.search:
             char_filter = await dbsearch.create_character_from_search(
-                ctx, self.search, limit=100)
+                ctx.guild_id, self.search, limit=100)
             new_list = filter(
                 lambda char: char in char_filter, character_list)
             character_list = list(new_list)
