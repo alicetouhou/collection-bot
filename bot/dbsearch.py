@@ -1,41 +1,33 @@
-import csv
-import typing as t
-
 from bot.character import Character
 from bot.character_instance import CharacterInstance
 from bot.user import User
 
-import crescent
-import miru
 import hikari
 import re
 
-if t.TYPE_CHECKING:
-    from bot.model import Model
-
 
 class DBSearch:
-
     def __init__(self, model):
         self.model = model
 
-    async def create_user(self, context: crescent.Context | crescent.AutocompleteContext | miru.ViewContext, player_id) -> User:
-        user = User(context, player_id, self.model)
+    async def create_user(self, guild_id: hikari.Snowflake, player_id) -> User:
+        user = User(guild_id, player_id, self.model)
         await user.add_player_to_db()
         return user
 
-    async def create_character(self, context: crescent.Context, character: Character) -> CharacterInstance:
-        instance = CharacterInstance(context, character, self.model)
+    async def create_character(self, guild: hikari.Guild, character: Character) -> CharacterInstance:
+        instance = CharacterInstance(guild, character, self.model)
         return instance
 
-    async def create_character_from_id(self, context: crescent.Context, id: int) -> CharacterInstance | None:
+    async def create_character_from_id(self, guild: hikari.Guild, id: int) -> CharacterInstance | None:
         """Returns `Character` if one exists with the ID. Otherwise, `None` is returned."""
         try:
             records = await self.model.dbpool.fetch(
-                "SELECT * FROM characters WHERE ID = $1", id,
+                "SELECT * FROM characters WHERE ID = $1",
+                id,
             )
             character = Character.from_record(records[0])
-            instance = CharacterInstance(context, character, self.model)
+            instance = CharacterInstance(guild, character, self.model)
             return instance
         except IndexError:
             return None
@@ -59,7 +51,11 @@ class DBSearch:
                 OR LOWER(anime_list) LIKE LOWER(${index+1}) 
                 OR LOWER(manga_list) LIKE LOWER(${index+1}) 
                 OR LOWER(games_list) LIKE LOWER(${index+1})) 
-                """.replace("\n", "").replace("                ", "")
+                """.replace(
+                "\n", ""
+            ).replace(
+                "                ", ""
+            )
 
         sql = sql.replace("AND", "WHERE", 1)
 
@@ -74,13 +70,13 @@ class DBSearch:
         searches = ["%" + x + "%" for x in search_split]
 
         records = await self.model.dbpool.fetch(
-            sql, *searches,
+            sql,
+            *searches,
         )
 
         output = []
         for record in records:
-            output.append(CharacterInstance(
-                ctx, Character.from_record(record), self.model))
+            output.append(CharacterInstance(ctx, Character.from_record(record), self.model))
 
         return output
 

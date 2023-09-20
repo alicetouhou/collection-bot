@@ -1,12 +1,9 @@
-import csv
 import typing as t
 
 from bot.character import Character
 from bot import shop_item as items
 from bot.upgrades import Upgrades, UpgradeEffects
 
-import crescent
-import miru
 import hikari
 
 if t.TYPE_CHECKING:
@@ -34,13 +31,10 @@ class User:
 
     _upgrades: dict[Upgrades, int] | None = None
 
-    def __init__(self, ctx: crescent.Context | crescent.AutocompleteContext | miru.ViewContext, user: hikari.User, model):
-        if ctx.guild_id is None:
-            return
-
-        self.guild = hikari.Snowflake(ctx.guild_id)
+    def __init__(self, guild_id: hikari.Snowflake, user: hikari.User, model):
+        self.guild = guild_id
         self.player_id = user.id
-        self._guild_str = f"players_{hikari.Snowflake(ctx.guild_id)}"
+        self._guild_str = f"players_{guild_id}"
         self.name = user.username
         self.model: Model = model
 
@@ -56,7 +50,9 @@ class User:
             return None
 
         if param is None:
-            records = await self.model.dbpool.fetch(f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(self.player_id))
+            records = await self.model.dbpool.fetch(
+                f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(self.player_id)
+            )
             return records[0][field]
         return param
 
@@ -79,7 +75,7 @@ class User:
     async def set_rolls(self, value: int) -> None:
         await self._execute(value, "rolls")
         self._rolls = value
-        if (self._rolls):
+        if self._rolls:
             self._rolls = value
 
     @property
@@ -89,7 +85,7 @@ class User:
     async def set_rolls_claimed_time(self, value: int) -> None:
         await self._execute(value, "claimed_rolls")
         self._rolls_claimed_time = value
-        if (self._rolls_claimed_time):
+        if self._rolls_claimed_time:
             self._rolls_claimed_time = value
 
     @property
@@ -98,7 +94,7 @@ class User:
 
     async def set_claims(self, value: int) -> None:
         await self._execute(value, "claims")
-        if (self._claims):
+        if self._claims:
             self._claims = value
 
     @property
@@ -107,7 +103,7 @@ class User:
 
     async def set_daily_claimed_time(self, value: int) -> None:
         await self._execute(value, "claimed_daily")
-        if (self._daily_claimed_time):
+        if self._daily_claimed_time:
             self._daily_claimed_time = value
 
     @property
@@ -116,7 +112,7 @@ class User:
 
     async def set_currency(self, value: int) -> None:
         await self._execute(value, "currency")
-        if (self._currency):
+        if self._currency:
             self._currency = value
 
     async def _fetch_int_group(self, param: t.Any, field: str) -> list[int]:
@@ -124,10 +120,12 @@ class User:
             return []
 
         if param is None:
-            record = await self.model.dbpool.fetch(f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(self.player_id))
+            record = await self.model.dbpool.fetch(
+                f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(self.player_id)
+            )
             character_str = record[0][field]
             character_ids_list = character_str.split(",")
-            filtered_list = filter(lambda x: x != '', character_ids_list)
+            filtered_list = filter(lambda x: x != "", character_ids_list)
             return [int(x) for x in filtered_list]
         return param
 

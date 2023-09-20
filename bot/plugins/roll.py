@@ -1,3 +1,5 @@
+import typing as t
+
 import crescent
 import hikari
 import miru
@@ -20,9 +22,11 @@ class ClaimView(miru.View):
 
     @miru.button(label="Claim!", emoji="❗", style=hikari.ButtonStyle.PRIMARY)
     async def claim_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
+        assert ctx.guild_id, "This command can not be used in DMs"
+
         self.stop()
         await self.on_timeout()
-        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
+        user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
 
         claims = await user.claims
         if claims <= 0:
@@ -57,9 +61,11 @@ class FragmentView(miru.View):
         style=hikari.ButtonStyle.PRIMARY,
     )
     async def claim_button(self, button: miru.Button, ctx: miru.ViewContext) -> None:
+        assert ctx.guild_id, "This command can not be used in DMs."
+
         self.stop()
         await self.on_timeout()
-        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
+        user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
         currency = await user.currency
         multiplier = await user.get_upgrade_value(Upgrades.FRAGMENT_BONUS)
         await user.set_currency(currency + int(self.character.value * multiplier))
@@ -80,57 +86,123 @@ class FragmentView(miru.View):
 @crescent.command(name="roll", description="Roll a character.")
 class RollCommand:
     async def callback(self, ctx: crescent.Context) -> None:
-        dbsearch = plugin.model.dbsearch
+        async def send_response(
+            msg: str,
+            embed: hikari.Embed,
+            components: t.Sequence[hikari.api.ComponentBuilder],
+        ):
+            return await ctx.respond(
+                msg,
+                embed=embed,
+                components=components,
+                user_mentions=[ctx.user],
+                ensure_message=True,
+            )
 
-        user, picked_character = await asyncio.gather(
-            dbsearch.create_user(ctx, ctx.user),
-            dbsearch.create_random_character(ctx)
+        async def send_error(msg: str) -> None:
+            await ctx.respond(msg)
+
+        await roll_command(
+            ctx.guild,
+            ctx.user,
+            send_response,
+            send_error,
         )
 
-        rolls, bonus, claimed, wishlist_people = await asyncio.gather(
-            user.rolls,
-            user.get_upgrade_value(Upgrades.WISHLIST_RATE_BONUS),
-            picked_character.get_claimed_id(),
-            picked_character.get_wished_ids()
-        )
 
-        if bonus:
-            random_number = random.random()
-            if (random_number < bonus):
-                wishlist = await user.wishlist
-                random_index = random.choice(wishlist)
-                new_character = await dbsearch.create_character_from_id(ctx, random_index)
+@plugin.include
+@crescent.event
+async def on_message(event: hikari.MessageCreateEvent):
+    if not event.content or not event.message.guild_id or event.content.strip() != "/roll":
+        return
 
-                if new_character is not None:
-                    picked_character = new_character
-                    wishlist_people = await picked_character.get_wished_ids()
+    guild = plugin.app.cache.get_guild(event.message.guild_id)
 
-        if rolls <= 0:
-            await ctx.respond("You have no rolls left! Use **/getrolls** to claim more.")
-            return
+    if not guild:
+        return
 
-        wishlist_people_formatted = ""
-        for id in wishlist_people:
-            wishlist_people_formatted += f"<@{id}> "
-
-        view: miru.View = ClaimView(
-            timeout=180, character=picked_character)
-
-        if claimed:
-            view = FragmentView(
-                timeout=180, character=picked_character)
-
-        embed = await picked_character.get_claimable_embed()
-        embed.set_footer(
-            f"{rolls - 1} roll{'s' if rolls != 2 else ''} remaining")
-
-        await ctx.respond(
-            wishlist_people_formatted,
+    async def send_response(
+        msg: str,
+        embed: hikari.Embed,
+        components: t.Sequence[hikari.api.ComponentBuilder],
+    ):
+        return await event.message.respond(
+            msg,
             embed=embed,
-            components=view,
-            user_mentions=wishlist_people,
+            components=components,
+            user_mentions=[event.author_id],
         )
-        message = ctx.interaction.fetch_initial_response()
-        await view.start(message)
 
-        await user.set_rolls(rolls - 1)
+    async def send_error(msg: str) -> None:
+        await event.message.respond(msg)
+
+    await roll_command(
+        guild,
+        event.message.author,
+        send_response,
+        send_error,
+    )
+
+
+async def roll_command(
+    guild: hikari.Guild | None,
+    user: hikari.User,
+    send_response: t.Callable[
+        [str, hikari.Embed, t.Sequence[hikari.api.ComponentBuilder]],
+        t.Awaitable[hikari.Message],
+    ],
+    send_error: t.Callable[[str], t.Awaitable[None]],
+):
+    if not guild:
+        await send_error("You must in a guild to use this command.")
+        return
+
+    dbsearch = plugin.model.dbsearch
+
+    user, picked_character = await asyncio.gather(
+        dbsearch.create_user(guild.id, user), dbsearch.create_random_character(guild)
+    )
+
+    rolls, bonus, claimed, wishlist_people = await asyncio.gather(
+        user.rolls,
+        user.get_upgrade_value(Upgrades.WISHLIST_RATE_BONUS),
+        picked_character.get_claimed_id(),
+        picked_character.get_wished_ids(),
+    )
+
+    if bonus:
+        random_number = random.random()
+        if random_number < bonus:
+            wishlist = await user.wishlist
+            random_index = random.choice(wishlist)
+            new_character = await dbsearch.create_character_from_id(guild, random_index)
+
+            if new_character is not None:
+                picked_character = new_character
+                wishlist_people = await picked_character.get_wished_ids()
+
+    if rolls <= 0:
+        await send_error("You have no rolls left! Use **/getrolls** to claim more.")
+        return
+
+    wishlist_people_formatted = ""
+    for id in wishlist_people:
+        wishlist_people_formatted += f"<@{id}> "
+
+    view: miru.View = ClaimView(timeout=180, character=picked_character)
+
+    if claimed:
+        view = FragmentView(timeout=180, character=picked_character)
+
+    embed = await picked_character.get_claimable_embed()
+    embed.set_footer(f"{rolls - 1} roll{'s' if rolls != 2 else ''} remaining")
+
+    message = await send_response(
+        wishlist_people_formatted,
+        embed,
+        view,
+        user,
+    )
+    await view.start(message)
+
+    await user.set_rolls(rolls - 1)
