@@ -103,7 +103,7 @@ class RollCommand:
             await ctx.respond(msg)
 
         await roll_command(
-            ctx.guild,
+            ctx.guild_id,
             ctx.user,
             send_response,
             send_error,
@@ -112,13 +112,8 @@ class RollCommand:
 
 @plugin.include
 @crescent.event
-async def on_message(event: hikari.MessageCreateEvent):
-    if not event.content or not event.message.guild_id or event.content.strip() != "/roll":
-        return
-
-    guild = plugin.app.cache.get_guild(event.message.guild_id)
-
-    if not guild:
+async def on_message(event: hikari.GuildMessageCreateEvent):
+    if not (event.content and event.message.guild_id and event.content.strip() == "/roll"):
         return
 
     async def send_response(
@@ -137,7 +132,7 @@ async def on_message(event: hikari.MessageCreateEvent):
         await event.message.respond(msg)
 
     await roll_command(
-        guild,
+        event.message.guild_id,
         event.message.author,
         send_response,
         send_error,
@@ -145,7 +140,7 @@ async def on_message(event: hikari.MessageCreateEvent):
 
 
 async def roll_command(
-    guild: hikari.Guild | None,
+    guild_id: hikari.Snowflake | None,
     user: hikari.User,
     send_response: t.Callable[
         [str, hikari.Embed, t.Sequence[hikari.api.ComponentBuilder]],
@@ -153,9 +148,11 @@ async def roll_command(
     ],
     send_error: t.Callable[[str], t.Awaitable[None]],
 ):
-    if not guild:
+    if not guild_id:
         await send_error("You must in a guild to use this command.")
         return
+
+    guild = plugin.app.cache.get_guild(guild_id) or await plugin.app.rest.fetch_guild(guild_id)
 
     dbsearch = plugin.model.dbsearch
 
@@ -201,7 +198,6 @@ async def roll_command(
         wishlist_people_formatted,
         embed,
         view,
-        user,
     )
     await view.start(message)
 

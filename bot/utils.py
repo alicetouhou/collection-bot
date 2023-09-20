@@ -27,7 +27,9 @@ class Utils:
             return None
 
         if char_id not in user_character_ids:
-            await ctx.respond(f"**{selected_character.first_name} {selected_character.last_name}** is not in your list!")
+            await ctx.respond(
+                f"**{selected_character.first_name} {selected_character.last_name}** is not in your list!"
+            )
             return None
 
         return selected_character
@@ -45,7 +47,9 @@ class Utils:
             return None
 
         if selected_character[0].id not in user_character_ids:
-            await ctx.respond(f"**{selected_character[0].first_name} {selected_character[0].last_name}** is not in your list!")
+            await ctx.respond(
+                f"**{selected_character[0].first_name} {selected_character[0].last_name}** is not in your list!"
+            )
             return None
 
         return selected_character[0]
@@ -60,8 +64,10 @@ class Utils:
             next(reader)
             data = []
             for x in reader:
-                data.append([int(x[0]), x[1], x[2], x[3],
-                            x[4], int(x[5]), x[6], x[7]])
+                try:
+                    data.append([int(x[0]), x[1], x[2], x[3], x[4], int(x[5]), x[6], x[7]])
+                except IndexError:
+                    print(f"Error adding: {x}")
 
             await conn.execute("DROP TABLE IF EXISTS characters")
             await conn.execute(
@@ -88,15 +94,12 @@ class Utils:
                 data,
             )
 
-    async def character_search_autocomplete(self,
-                                            ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
-                                            ) -> list[tuple[str, str]]:
+    async def character_search_autocomplete(
+        self, ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+    ) -> list[tuple[str, str]]:
         options = ctx.options
 
-        character_list = await self.model.dbsearch.create_character_from_search(
-            ctx,
-            options["search"]
-        )
+        character_list = await self.model.dbsearch.create_character_from_search(ctx, options["search"])
 
         output = []
         for character in character_list:
@@ -106,18 +109,18 @@ class Utils:
             output.append((name, str(character.id)))
         return output
 
-    async def character_search_in_list_autocomplete(self,
-                                                    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
-                                                    ) -> list[tuple[str, str]]:
-        options = ctx.options
+    async def character_search_in_list_autocomplete(
+        self, ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+    ) -> list[tuple[str, str]]:
+        if not ctx.guild_id:
+            return []
 
-        user = await self.model.dbsearch.create_user(ctx, ctx.user)
+        options = ctx.options
+        user = await self.model.dbsearch.create_user(ctx.guild_id, ctx.user)
         user_characters = await user.characters
 
         character_list = await self.model.dbsearch.create_character_from_search(
-            ctx,
-            options["search"],
-            filter=user_characters
+            ctx, options["search"], filter=user_characters
         )
 
         output = []
