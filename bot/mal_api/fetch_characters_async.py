@@ -79,7 +79,7 @@ class Character:
         return ",".join(self.images)
 
 
-async def get_series_from_ids(session: aiohttp.ClientSession, ids: list[int], type="anime") -> list[Series]:
+async def get_series_from_ids(session: aiohttp.ClientSession, ids: list[int], type) -> list[Series]:
     output = []
     for id in ids:
         url = f'https://api.myanimelist.net/v2/{type}/{id}'
@@ -93,7 +93,7 @@ async def get_series_from_ids(session: aiohttp.ClientSession, ids: list[int], ty
     return output
 
 
-async def get_top_series_ids(session: aiohttp.ClientSession, amount, offset, type="anime") -> list[Series]:
+async def get_top_series_ids(session: aiohttp.ClientSession, amount, offset, type) -> list[Series]:
     url = f'https://api.myanimelist.net/v2/{type}/ranking?ranking_type=bypopularity&limit={amount}&offset={offset}'
     async with session.get(url=url, headers=HEADERS) as response:
         resp = await response.read()
@@ -114,7 +114,7 @@ async def get_character(session: aiohttp.ClientSession, character_id: int):
         return resp
 
 
-async def get_characters_in_series(session: aiohttp.ClientSession, series: Series, type="anime") -> list[Character]:
+async def get_characters_in_series(session: aiohttp.ClientSession, series: Series, type: str, index: int = 0) -> list[Character]:
     url = f"https://myanimelist.net/{type}/{series.id}/x/characters"
     async with session.get(url=url) as response:
         resp = await response.read()
@@ -124,8 +124,7 @@ async def get_characters_in_series(session: aiohttp.ClientSession, series: Serie
 
         soup = BeautifulSoup(resp, 'html.parser')
 
-        title = soup.find('strong')
-        print(f"Now grabbing: {title.string}")
+        print(f"Now grabbing: {series.title} ({type}) ({index})")
 
         data = soup.find_all('td', class_='borderClass bgColor2')
         data += soup.find_all('td', class_='borderClass bgColor1')
@@ -138,10 +137,17 @@ async def get_characters_in_series(session: aiohttp.ClientSession, series: Serie
                     character_array.append(
                         [int(m.groups()[0]), int(n.groups()[0].replace(",", ""))])
 
-        for character_piece in progressbar.progressbar(character_array):
+        for character_piece in progressbar.progressbar(character_array, widgets=[progressbar.Percentage(), "", progressbar.GranularBar()]):
             if character_piece[1] == 0:
                 continue
-            character_data = await get_character(session, character_piece[0])
+            while True:
+                try:
+                    character_data = await get_character(session, character_piece[0])
+                except:
+                    print("\nError encountered! Retrying character....")
+                    sleep(15)
+                else:
+                    break
 
             if "pictures" in character_data:
                 pictures = []
@@ -152,7 +158,7 @@ async def get_characters_in_series(session: aiohttp.ClientSession, series: Serie
                         id=character_piece[0],
                         first_name=character_data["first_name"],
                         last_name=character_data["last_name"],
-                        anime=title.string,
+                        anime=series.title,
                         manga="",
                         game="",
                         images=pictures,
@@ -165,7 +171,7 @@ async def get_characters_in_series(session: aiohttp.ClientSession, series: Serie
                         first_name=character_data["first_name"],
                         last_name=character_data["last_name"],
                         anime="",
-                        manga=title.string,
+                        manga=series.title,
                         game="",
                         images=pictures,
                         favorites=character_piece[1],
@@ -231,19 +237,20 @@ async def write_to_file(session, characters: list[Character]):
     writer.writerows(data)
 
 
-async def add_series(session, series):
+async def add_series(session, series, index, type="anime"):
     characters = await get_characters_in_series(
-        session, series, type="anime")
+        session, series, type, index)
     await write_to_file(session, characters)
 
 
 async def get_series():
     async with aiohttp.ClientSession() as session:
-        series_ids = await get_top_series_ids(session, 40, 860, type="anime")
-        for series in series_ids:
+        # series_ids = await get_top_series_ids(session, 227, 173, type="manga")
+        series_ids = await get_series_from_ids(session, [12191, 603, 21511], type="anime")
+        for i, series in enumerate(series_ids):
             while True:
                 try:
-                    await add_series(session, series)
+                    await add_series(session, series, index=i, type="anime")
                 except:
                     print("\nError encountered! Retrying series....")
                     sleep(15)
