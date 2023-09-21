@@ -17,8 +17,9 @@ class ViewCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id
 
-        description = "Use `/shop buy item name` to buy items.\n\n"
         user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
+        currency = await user.currency
+        description = f"Use `/shop buy item name` to buy items • Current balance <:wishfragments:1148459769980530740> **{currency}**\n\n"
 
         for item in shop_items:
             description += item.description_line() + "\n"
@@ -30,7 +31,8 @@ class ViewCommand:
             description += item.description_line() + "\n"
 
         description += "\n\n*More items coming soon!*"
-        embed = hikari.Embed(title="⛩️ Suzunaan Store", color="f598df", description=description)
+        embed = hikari.Embed(title="⛩️ Suzunaan Store",
+                             color="f598df", description=description)
         await ctx.respond(embed)
 
 
@@ -44,7 +46,8 @@ async def autocomplete_response(
     upgrades = await user.get_upgrade_shop_objects()
     combined_list = list(shop_items) + upgrades
     output = [(item.name, index) for index, item in enumerate(combined_list)]
-    filtered_list = filter(lambda x: options["item"].lower() in x[0].lower(), output)
+    filtered_list = filter(
+        lambda x: options["item"].lower() in x[0].lower(), output)
     return list(filtered_list)
 
 
@@ -52,7 +55,8 @@ async def autocomplete_response(
 @plugin.include
 @crescent.command(name="buy", description="Buy an item.")
 class BuyCommand:
-    item = crescent.option(int, "Select an item to purchase.", name="item", autocomplete=autocomplete_response)
+    item = crescent.option(int, "Select an item to purchase.",
+                           name="item", autocomplete=autocomplete_response)
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id
