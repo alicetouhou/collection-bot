@@ -1,3 +1,4 @@
+import math
 from enum import Enum, auto
 
 
@@ -58,12 +59,12 @@ class WishlistSize:
 
 class WishlistRateBonus:
     def modifier(self, level) -> float:
-        return 0.0001 * level
+        return round(math.log(level+1, 1.62) / 750, 4)
 
     def formatted_modifier(self, level) -> str:
         if level != 0:
-            return f"{self.modifier(level)* 100}%"
-        return f"<{self.modifier(level+1)*100}%"
+            return f"{self.modifier(level)*100}".ljust(4, "0") + "%"
+        return "≈0%"
 
 
 class UpgradeEffects:
