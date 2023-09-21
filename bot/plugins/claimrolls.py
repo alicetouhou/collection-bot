@@ -18,7 +18,7 @@ class ListCommand:
         assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
 
-        user = await dbsearch.create_user(ctx, ctx.user)
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
 
         regeneration_rate = int(await user.get_upgrade_value(Upgrades.ROLL_REGEN))
         roll_max = int(await user.get_upgrade_value(Upgrades.ROLL_MAX))

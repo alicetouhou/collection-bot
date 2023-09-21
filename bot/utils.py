@@ -49,7 +49,10 @@ class Utils:
         return selected_character
 
     async def validate_search_in_list(self, ctx: crescent.Context, user: User, char_search: str) -> Character | None:
-        selected_character = await self.model.dbsearch.create_character_from_search(ctx, char_search)
+        if not ctx.guild_id:
+            return None
+
+        selected_character = await self.model.dbsearch.create_character_from_search(ctx.guild_id, char_search)
         user_character_ids = await user.characters
 
         if len(selected_character) == 0:
@@ -79,7 +82,8 @@ class Utils:
             data = []
             for x in reader:
                 try:
-                    data.append([int(x[0]), x[1], x[2], x[3], x[4], int(x[5]), x[6], x[7]])
+                    data.append([int(x[0]), x[1], x[2], x[3],
+                                x[4], int(x[5]), x[6], x[7]])
                 except IndexError:
                     print(f"Error adding: {x}")
 
@@ -116,7 +120,10 @@ class Utils:
         if len(options["search"]) == 0:
             return []
 
-        character_list = await self.model.dbsearch.create_character_from_search(ctx, options["search"])
+        if not ctx.guild_id:
+            return []
+
+        character_list = await self.model.dbsearch.create_character_from_search(ctx.guild_id, options["search"])
 
         output = []
         for character in character_list:
@@ -127,17 +134,20 @@ class Utils:
         return output
 
     async def character_search_in_list_autocomplete(
-        self, ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+        self, ctx: crescent.AutocompleteContext, option: str = "search", char_filter=None,
     ) -> list[tuple[str, str]]:
+
         if not ctx.guild_id:
             return []
 
         options = ctx.options
         user = await self.model.dbsearch.create_user(ctx.guild_id, ctx.user)
-        user_characters = await user.characters
-
+        if char_filter is None:
+            char_filter = await user.characters
         character_list = await self.model.dbsearch.create_character_from_search(
-            ctx, options["search"], filter=user_characters
+            ctx.guild_id,
+            options[option],
+            filter=char_filter
         )
 
         output = []

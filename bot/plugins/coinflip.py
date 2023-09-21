@@ -21,7 +21,7 @@ class InfoCommand:
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
-        user = await plugin.model.dbsearch.create_user(ctx, ctx.user)
+        user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
 
         currency = await user.currency
 

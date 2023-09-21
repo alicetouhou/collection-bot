@@ -51,7 +51,8 @@ class User:
 
         if param is None:
             records = await self.model.dbpool.fetch(
-                f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(self.player_id)
+                f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(
+                    self.player_id)
             )
             return records[0][field]
         return param
@@ -121,7 +122,8 @@ class User:
 
         if param is None:
             record = await self.model.dbpool.fetch(
-                f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(self.player_id)
+                f"SELECT {field} FROM {self._guild_str} WHERE ID = $1", str(
+                    self.player_id)
             )
             character_str = record[0][field]
             character_ids_list = character_str.split(",")
@@ -141,17 +143,16 @@ class User:
                 stringified_value,
                 str(self.player_id),
             )
-        return value
 
-    async def _append_to_chararacter_list(self, list, character: Character, field: str, prepend=False) -> None:
+    async def _append_to_chararacter_list(self, list: list[int], character: Character, field: str, index=None) -> None:
         if self.model.dbpool is None:
             return
 
         async with self.model.dbpool.acquire() as conn:
-            if prepend is False:
+            if index is None:
                 list.append(character.id)
             else:
-                list = [character.id] + list
+                list.insert(index, character.id)
 
             stringified_list = ",".join(map(str, list))
 
@@ -180,9 +181,9 @@ class User:
     async def characters(self) -> list[int]:
         return await self._fetch_int_group(self._characters, "characters")
 
-    async def append_to_characters(self, character: Character, prepend=False):
+    async def append_to_characters(self, character: Character, index=None):
         self._characters = await self._fetch_int_group(self._characters, "characters")
-        await self._append_to_chararacter_list(self._characters, character, "characters", prepend=prepend)
+        await self._append_to_chararacter_list(self._characters, character, "characters", index=index)
         self._characters = await self._fetch_int_group(self._characters, "characters")
 
     async def remove_from_characters(self, character: Character):
@@ -204,9 +205,9 @@ class User:
         await self._remove_from_character_list(self._wishlist, character, "wishlist")
         self._wishlist = await self._fetch_int_group(self._wishlist, "wishlist")
 
-    async def reorder(self, character: Character):
+    async def reorder(self, character: Character, insertion_index: int):
         await self.remove_from_characters(character)
-        await self.append_to_characters(character, prepend=True)
+        await self.append_to_characters(character, index=insertion_index)
 
     @property
     async def upgrades(self) -> dict[Upgrades, int]:

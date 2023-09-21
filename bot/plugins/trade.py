@@ -214,7 +214,7 @@ class TradeAddCommand:
             await ctx.respond("You are not currently in a trade!")
             return
 
-        character_list = await dbsearch.create_character_from_search(ctx, self.search)
+        character_list = await dbsearch.create_character_from_search(ctx.guild_id, self.search)
 
         if len(character_list) != 1:
             await ctx.respond(

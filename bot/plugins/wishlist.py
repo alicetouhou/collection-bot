@@ -49,7 +49,8 @@ class WishListCommand:
         description = ""
         for character in character_list:
             description += f"`{'0' * (6 - int(math.log(character.id, 10) + 1))}{character.id}` {character.first_name} {character.last_name}\n"
-        embed = hikari.Embed(title=f"{user.name}'s Characters", color="f598df", description=description)
+        embed = hikari.Embed(
+            title=f"{user.name}'s Characters", color="f598df", description=description)
         embed.set_footer(f"{len(character_list)}/{wishlist_size} slots full")
         await ctx.respond(embed)
 
@@ -75,7 +76,7 @@ class WishAddCommand:
 
         user_character_ids = await user.wishlist
         wishlist_size = await user.get_upgrade_value(Upgrades.WISHLIST_SIZE)
-        character_list = await dbsearch.create_character_from_search(ctx, self.search)
+        character_list = await dbsearch.create_character_from_search(ctx.guild_id, self.search)
 
         if len(character_list) != 1:
             await ctx.respond(
@@ -115,7 +116,7 @@ class WishRemoveCommand:
 
         dbsearch = plugin.model.dbsearch
         user = await dbsearch.create_user(ctx.guild_id, ctx.user)
-        character_list = await dbsearch.create_character_from_search(ctx, self.search)
+        character_list = await dbsearch.create_character_from_search(ctx.guild_id, self.search)
 
         user_character_ids = await user.wishlist
 

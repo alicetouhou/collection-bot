@@ -58,17 +58,8 @@ def get_urls(f):
 
 async def remove_wrong_erratas(f, filedata):
     erratas = await asyncio.gather(
-        get_image_sizes(urls, 0, 1999, "A"),
-        get_image_sizes(urls, 2000, 1999, "B"),
-        get_image_sizes(urls, 4000, 1999, "C"),
-        get_image_sizes(urls, 5000, 1999, "D"),
-        get_image_sizes(urls, 6000, 1999, "E"),
-        get_image_sizes(urls, 8000, 1999, "F"),
-        get_image_sizes(urls, 10000, 1499, "G"),
-        get_image_sizes(urls, 11500, 1999, "H"),
-        get_image_sizes(urls, 13500, 1999, "I"),
-        get_image_sizes(urls, 15500, 2499, "J"),
-        get_image_sizes(urls, 18000, 1508, "K"),
+        get_image_sizes(urls, 18500, 19000, "A"),
+        get_image_sizes(urls, 19000, 19347, "B"),
 
     )
 

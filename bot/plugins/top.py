@@ -7,10 +7,34 @@ from bot.utils import guild_only
 plugin = Plugin()
 
 
-async def character_search_autocomplete(
+async def character_search_autocomplete_1(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
 ) -> list[tuple[str, str]]:
-    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, option)
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, "first")
+
+
+async def character_search_autocomplete_2(
+    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+) -> list[tuple[str, str]]:
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, "second")
+
+
+async def character_search_autocomplete_3(
+    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+) -> list[tuple[str, str]]:
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, "third")
+
+
+async def character_search_autocomplete_4(
+    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+) -> list[tuple[str, str]]:
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, "fourth")
+
+
+async def character_search_autocomplete_5(
+    ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+) -> list[tuple[str, str]]:
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, "fifth")
 
 
 @plugin.include
@@ -20,22 +44,79 @@ async def character_search_autocomplete(
     description="Move a character to the top of your list, which sets your thumbnail image to them.",
 )
 class TopCommand:
-    search = crescent.option(
+    first = crescent.option(
         str,
         "Search for a character by name, or ID. The given and family names can be in any order.",
-        name="search",
-        autocomplete=character_search_autocomplete,
+        name="first",
+        autocomplete=character_search_autocomplete_1,
+    )
+
+    second = crescent.option(
+        str,
+        "Search for a character by name, or ID. The given and family names can be in any order.",
+        name="second",
+        autocomplete=character_search_autocomplete_2,
+        default=None
+    )
+
+    third = crescent.option(
+        str,
+        "Search for a character by name, or ID. The given and family names can be in any order.",
+        name="third",
+        autocomplete=character_search_autocomplete_3,
+        default=None
+    )
+
+    fourth = crescent.option(
+        str,
+        "Search for a character by name, or ID. The given and family names can be in any order.",
+        name="fourth",
+        autocomplete=character_search_autocomplete_4,
+        default=None
+    )
+
+    fifth = crescent.option(
+        str,
+        "Search for a character by name, or ID. The given and family names can be in any order.",
+        name="fifth",
+        autocomplete=character_search_autocomplete_5,
+        default=None
     )
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id
+        dbsearch = plugin.model.dbsearch
 
-        user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
-        character = await plugin.model.utils.validate_search_in_list(ctx, user, self.search)
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
+        character_list = await user.characters
 
-        if not character:
-            return
+        params_list = [self.first, self.second,
+                       self.third, self.fourth, self.fifth]
 
-        await user.reorder(character)
+        for index, param in enumerate(params_list):
+            if not param:
+                continue
 
-        await ctx.respond(f"**{character.first_name} {character.last_name}** has been moved to the top of your list.")
+            character = await plugin.model.utils.validate_search_in_list(ctx, user, param)
+
+            if not character:
+                continue
+
+            if len(character_list) >= index:
+                await user.reorder(character, index)
+
+        if not self.second and not self.third and not self.fourth and not self.fifth:
+            character = await plugin.model.utils.validate_search_in_list(ctx, user, self.first)
+            if not character:
+                return
+            await ctx.respond(f"**{character.first_name} {character.last_name}** has been moved to the top of your list.")
+        else:
+            character_list = await user.characters
+            top_five_characters = [await dbsearch.create_character_from_id(ctx.guild_id, char) for char in character_list[:5]]
+            description = ""
+
+            for index, character in enumerate(top_five_characters):
+                if not character:
+                    continue
+                description += f"{index+1}. **{character.first_name} {character.last_name}**\n"
+            await ctx.respond(f"List reordered! New top {len(top_five_characters)}:\n{description}")

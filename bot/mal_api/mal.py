@@ -1,9 +1,16 @@
 import json
 import secrets
 import requests
+import dotenv
+import os
 
+dotenv.load_dotenv()
 
 # 1. Generate a new Code Verifier / Code Challenge.
+CLIENT_ID = os.environ["CLIENT_ID"]
+CLIENT_SECRET = os.environ["CLIENT_SECRET"]
+
+
 def get_new_code_verifier() -> str:
     token = secrets.token_urlsafe(100)
     return token[:128]
