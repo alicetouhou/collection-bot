@@ -70,14 +70,15 @@ trade_group = crescent.Group("trade")
 async def character_search_autocomplete(
     ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
 ) -> list[tuple[str, str]]:
-    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, option)
+    return await plugin.model.utils.character_search_in_list_autocomplete(ctx, "search")
 
 
 @plugin.include
 @trade_group.child
 @crescent.command(name="begin", description="Start a trade with another player.")
 class TradeCommand:
-    member = crescent.option(hikari.User, "Enter a server member's @.", name="username")
+    member = crescent.option(
+        hikari.User, "Enter a server member's @.", name="username")
 
     async def callback(self, ctx: crescent.Context) -> None:
         other_user = self.member
@@ -86,7 +87,8 @@ class TradeCommand:
             await ctx.respond("You cannot trade with yourself!")
             return
 
-        trade_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        trade_id = "".join(random.choices(
+            string.ascii_uppercase + string.digits, k=10))
 
         current_trades[trade_id] = Trade(ctx.user, other_user)
 
@@ -147,7 +149,8 @@ class TradeConfirmCommand:
         if len(current_trade.b_list) >= 1:
             description += f"{character_list_str(current_trade.b_list,split=',')} traded from {current_trade.b.mention} to {current_trade.a.mention}"
 
-        embed = hikari.Embed(title="Trade Complete!", color="f598df", description=description)
+        embed = hikari.Embed(title="Trade Complete!",
+                             color="f598df", description=description)
 
         await ctx.respond(embed)
 

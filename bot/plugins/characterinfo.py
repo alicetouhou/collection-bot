@@ -37,14 +37,15 @@ class ListCommand:
 
             count = 0
             while count < len(character_list):
-                characters_on_page = character_list[count : 20 + count]
+                characters_on_page = character_list[count: 20 + count]
 
                 description = header
 
                 for character in characters_on_page:
                     description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` {character.first_name} {character.last_name}\n"
 
-                embed = hikari.Embed(title="Search results", color="f598df", description=description)
+                embed = hikari.Embed(title="Search results",
+                                     color="f598df", description=description)
 
                 pages.append(embed)
                 count += 20
