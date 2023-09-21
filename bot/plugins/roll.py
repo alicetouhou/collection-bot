@@ -159,17 +159,22 @@ async def roll_command(
         dbsearch.create_user(guild_id, user), dbsearch.create_random_character(guild_id)
     )
 
-    rolls, bonus, claimed, wishlist_people = await asyncio.gather(
+    rolls, bonus, claimed, wishlist, wishlist_people = await asyncio.gather(
         user.rolls,
         user.get_upgrade_value(Upgrades.WISHLIST_RATE_BONUS),
         picked_character.get_claimed_id(),
+        user.wishlist,
         picked_character.get_wished_ids(),
     )
+
+    # We want to have a bigger chance for every item in the wishlist.
+    # This number grows so it would be equivalent to checking a random number
+    # is in bonus `len(wishlist)` times.
+    bonus = 1 - (1 - bonus) ** len(wishlist)
 
     if bonus:
         random_number = random.random()
         if random_number < bonus:
-            wishlist = await user.wishlist
             random_index = random.choice(wishlist)
             new_character = await dbsearch.create_character_from_id(guild_id, random_index)
 
