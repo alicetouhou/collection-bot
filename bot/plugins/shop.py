@@ -30,7 +30,6 @@ class ViewCommand:
         for item in upgrades:
             description += item.description_line() + "\n"
 
-        description += "\n\n*More items coming soon!*"
         embed = hikari.Embed(title="⛩️ Suzunaan Store",
                              color="f598df", description=description)
         await ctx.respond(embed)
