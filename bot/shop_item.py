@@ -156,7 +156,7 @@ class WishlistRateUp(Upgrade):
         super().__init__(
             level=level,
             name="Wishlist Rate",
-            description="Increase the chance of rolling a wishlisted character from **$1** to **$2**.",
+            description="Increase the chance of rolling each wishlisted character from **$1** to **$2**.",
             price=800,
             multiplier=1.4,
             icon="🌟",

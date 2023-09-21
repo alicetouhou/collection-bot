@@ -58,7 +58,7 @@ class WishlistSize:
 
 class WishlistRateBonus:
     def modifier(self, level) -> float:
-        return 0.0005 * level
+        return 0.0001 * level
 
     def formatted_modifier(self, level) -> str:
         if level != 0:
