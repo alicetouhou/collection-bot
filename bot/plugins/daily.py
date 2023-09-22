@@ -9,9 +9,7 @@ from bot.upgrades import Upgrades
 plugin = Plugin()
 
 
-@plugin.include
-@crescent.command(name="daily", description="Claim your daily rewards (claims and wish fragments).")
-class ListCommand:
+class DailyCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
@@ -42,3 +40,19 @@ class ListCommand:
             )
 
         await ctx.respond(message)
+
+
+@plugin.include
+@crescent.command(name="daily", description="Claim your daily rewards (claims and wish fragments).")
+class LongCommand:
+    async def callback(self, ctx: crescent.Context) -> None:
+        command = DailyCommand()
+        await command.callback(ctx)
+
+
+@plugin.include
+@crescent.command(name="d", description="Alias of /daily.")
+class ShortenedCommand:
+    async def callback(self, ctx: crescent.Context) -> None:
+        command = DailyCommand()
+        await command.callback(ctx)

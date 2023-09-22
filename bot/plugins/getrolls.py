@@ -8,12 +8,7 @@ from bot.upgrades import Upgrades
 plugin = Plugin()
 
 
-@plugin.include
-@crescent.command(
-    name="getrolls",
-    description="Get your rolls. Without upgrades, One roll regenerates every 15 minutes, until 20 is reached.",
-)
-class ListCommand:
+class GetRollsCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
@@ -45,3 +40,22 @@ class ListCommand:
         message = f"{rolls_to_be_claimed} roll{'s' if rolls_to_be_claimed != 1 else ''} have been claimed.\nNext roll regenerates in: **{int(regenerate_time/60)}** minutes and **{regenerate_time % 60}** seconds"
 
         await ctx.respond(message)
+
+
+@plugin.include
+@crescent.command(
+    name="getrolls",
+    description="Get your rolls. Without upgrades, One roll regenerates every 15 minutes, until 20 is reached.",
+)
+class LongCommand:
+    async def callback(self, ctx: crescent.Context) -> None:
+        command = GetRollsCommand()
+        await command.callback(ctx)
+
+
+@plugin.include
+@crescent.command(name="gr", description="Alias of /getrolls.")
+class ShortenedCommand:
+    async def callback(self, ctx: crescent.Context) -> None:
+        command = GetRollsCommand()
+        await command.callback(ctx)

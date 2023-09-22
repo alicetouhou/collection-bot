@@ -83,8 +83,6 @@ class FragmentView(miru.View):
         await self.message.edit(components=self)
 
 
-@plugin.include
-@crescent.command(name="roll", description="Roll a character.")
 class RollCommand:
     async def callback(self, ctx: crescent.Context) -> None:
         async def send_response(
@@ -112,9 +110,25 @@ class RollCommand:
 
 
 @plugin.include
+@crescent.command(name="roll", description="Roll a character.")
+class LongCommand:
+    async def callback(self, ctx: crescent.Context) -> None:
+        command = RollCommand()
+        await command.callback(ctx)
+
+
+@plugin.include
+@crescent.command(name="r", description="Alias of /roll.")
+class ShortenedCommand:
+    async def callback(self, ctx: crescent.Context) -> None:
+        command = RollCommand()
+        await command.callback(ctx)
+
+
+@plugin.include
 @crescent.event
 async def on_message(event: hikari.GuildMessageCreateEvent):
-    if not (event.content and event.message.guild_id and event.content.strip() == "/roll"):
+    if not (event.content and event.message.guild_id and (event.content.strip() == "/roll" or event.content.strip() == "/r")):
         return
 
     async def send_response(
@@ -156,7 +170,8 @@ async def roll_command(
     dbsearch = plugin.model.dbsearch
 
     user, picked_character = await asyncio.gather(
-        dbsearch.create_user(guild_id, user), dbsearch.create_random_character(guild_id)
+        dbsearch.create_user(
+            guild_id, user), dbsearch.create_random_character(guild_id)
     )
 
     rolls, bonus, claimed, wishlist, wishlist_people = await asyncio.gather(
