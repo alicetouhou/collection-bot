@@ -94,15 +94,13 @@ class TradeCommand:
 
         await ctx.respond(f"{ctx.user.mention} started a trade with {other_user.mention}!")
 
-        try:
-            async with asyncio.timeout(120):
-                await asyncio.sleep(3600)
-        except TimeoutError:
-            if current_trades[trade_id]:
-                del current_trades[trade_id]
-                await ctx.respond(
-                    f"Timed out! {ctx.user.mention}'s and {other_user.mention}'s trade was not completed within 2 minutes."
-                )
+        await asyncio.sleep(180)
+
+        if current_trades[trade_id]:
+            del current_trades[trade_id]
+            await ctx.respond(
+                f"Timed out! {ctx.user.mention}'s and {other_user.mention}'s trade was not completed within 3 minutes."
+            )
 
 
 @plugin.include
