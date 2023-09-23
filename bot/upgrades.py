@@ -59,11 +59,11 @@ class WishlistSize:
 
 class WishlistRateBonus:
     def modifier(self, level) -> float:
-        return round(math.log(level+1, 1.62) / 750, 4)
+        return round(math.log(level+1, 1.62) / 4775, 5)
 
     def formatted_modifier(self, level) -> str:
         if level != 0:
-            return f"{self.modifier(level)*100}".ljust(4, "0") + "%"
+            return f"{self.modifier(level)*100}".ljust(5, "0") + "%"
         return "≈0%"
 
 
