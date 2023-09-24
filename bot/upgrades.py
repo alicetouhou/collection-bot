@@ -60,15 +60,16 @@ class WishlistSize:
 class WishlistRateBonus:
 
     def modifier_as_int(self, level) -> int:
-        return int((math.log(level+1, 1.62) / 4775) * 10000 + 0.5)
+        return int((math.log(level+1, 1.62) / 2387) * 10000 + 0.5)
 
     def modifier(self, level) -> float:
         return self.modifier_as_int(level) / 10000
 
     def formatted_modifier(self, level) -> str:
         if level != 0:
-            return f"{self.modifier_as_int(level) / 100}".ljust(5, "0") + "%"
-        return "≈0%"
+            # return f"{self.modifier_as_int(level) / 100}".ljust(5, "0") + "%"
+            return f"1 in {int(10000 / self.modifier_as_int(level))} rolls"
+        return "1 in 20000 rolls"
 
 
 class UpgradeEffects:
