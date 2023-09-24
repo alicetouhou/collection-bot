@@ -16,8 +16,11 @@ class Trade:
     a: hikari.User
     b: hikari.User
 
-    a_list: list[Character]
-    b_list: list[Character]
+    a_list: list[Character] = []
+    b_list: list[Character] = []
+
+    a_currency: int = 0
+    b_currency: int = 0
 
     a_confirmed: bool = False
     b_confirmed: bool = False
@@ -49,15 +52,19 @@ def get_trade_embed(ctx: crescent.Context, key: str) -> hikari.Embed:
     )
 
     breakline = "--------------------\n"
+    currency_count_a = f"<:wishfragments:1148459769980530740>{trade.a_currency}"
+    currency_count_b = f"<:wishfragments:1148459769980530740>{trade.b_currency}"
 
     embed.add_field(
         name=f"{trade.a.username}",
-        value=breakline + character_list_str(trade.a_list),
+        value=breakline + currency_count_a +
+        "\n" + character_list_str(trade.a_list),
         inline=True,
     )
     embed.add_field(
         name=f"{trade.b.username}",
-        value=breakline + character_list_str(trade.b_list),
+        value=breakline + currency_count_b +
+        "\n" + character_list_str(trade.b_list),
         inline=True,
     )
 
@@ -152,6 +159,9 @@ class TradeConfirmCommand:
 
         await ctx.respond(embed)
 
+        await user_a.set_currency((await user_a.currency) + current_trade.b_currency - current_trade.a_currency)
+        await user_b.set_currency((await user_a.currency) + current_trade.a_currency - current_trade.b_currency)
+
         for character in current_trade.a_list:
             await user_a.remove_from_characters(character)
             await user_b.append_to_characters(character)
@@ -186,7 +196,7 @@ class TradeCancelCommand:
 
 @plugin.include
 @trade_group.child
-@crescent.command(name="add", description="Add a character to trade by ID.")
+@crescent.command(name="addcharacter", description="Add a character to trade by ID.")
 class TradeAddCommand:
     search = crescent.option(
         str,
@@ -238,5 +248,55 @@ class TradeAddCommand:
                 await ctx.respond("You already confirmed the trade. You can't add any more characters.")
                 return
             current_trades[trade_id].b_list.append(character)
+
+        await ctx.respond(get_trade_embed(ctx, trade_id))
+
+
+@plugin.include
+@trade_group.child
+@crescent.command(name="addfragments", description="Add a character to trade by ID.")
+class TradeAddFragmentsCommand:
+    amount = crescent.option(
+        int,
+        "Add an amount of wish fragments to trade.",
+        name="search",
+    )
+
+    async def callback(self, ctx: crescent.Context) -> None:
+        assert ctx.guild_id
+
+        utils = plugin.model.utils
+        dbsearch = plugin.model.dbsearch
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
+
+        # Find trade id
+        id_list = current_trades.keys()
+        trade_id = ""
+
+        for trade in id_list:
+            if current_trades[trade].a.id == ctx.user.id or current_trades[trade].b.id == ctx.user.id:
+                trade_id = trade
+                break
+
+        currency = await user.currency
+
+        if trade_id == "":
+            await ctx.respond("You are not currently in a trade!")
+            return
+
+        if currency < self.amount:
+            await ctx.respond(f"You don't have that many wish fragments to trade. Your current balance is **<:wishfragments:1148459769980530740>{currency}**")
+            return
+
+        if ctx.user == current_trades[trade_id].a:
+            if current_trades[trade_id].a_confirmed is True:
+                await ctx.respond("You already confirmed the trade. You can't add any more characters.")
+                return
+            current_trades[trade_id].a_currency += self.amount
+        else:
+            if current_trades[trade_id].b_confirmed is True:
+                await ctx.respond("You already confirmed the trade. You can't add any more characters.")
+                return
+            current_trades[trade_id].b_currency += self.amount
 
         await ctx.respond(get_trade_embed(ctx, trade_id))
