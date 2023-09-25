@@ -15,7 +15,7 @@ plugin = Plugin()
 class InfoCommand:
     wager = crescent.option(
         int,
-        "Wager an amount. If heads, your wager doubles. If tails, you loose it.",
+        "Wager an amount. If heads, your wager doubles. If tails, you lose it.",
         name="wager",
     )
 
