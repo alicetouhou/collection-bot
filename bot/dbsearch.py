@@ -10,7 +10,7 @@ class DBSearch:
     def __init__(self, model):
         self.model = model
 
-    async def create_user(self, guild_id: hikari.Snowflake, player_id) -> User:
+    async def create_user(self, guild_id: hikari.Snowflake, player_id: hikari.User) -> User:
         user = User(guild_id, player_id, self.model)
         await user.add_player_to_db()
         return user
@@ -78,7 +78,8 @@ class DBSearch:
 
         output = []
         for record in records:
-            output.append(CharacterInstance(guild_id, Character.from_record(record), self.model))
+            output.append(CharacterInstance(
+                guild_id, Character.from_record(record), self.model))
 
         return output
 

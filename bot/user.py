@@ -308,8 +308,8 @@ class User:
 
         return upgrades_dict
 
-    async def increase_upgrade_level(self, upgrade: Upgrades) -> None:
-        await self._increase_upgrade_level(upgrade, 1)
+    async def increase_upgrade_level(self, upgrade: Upgrades, amount: int = 1) -> None:
+        await self._increase_upgrade_level(upgrade, amount)
 
     async def get_upgrade_shop_objects(self) -> list[items.Upgrade]:
         upgrades = await self.upgrades

@@ -157,3 +157,9 @@ class Utils:
                 name = name[0:98] + "..."
             output.append((name, str(character.id)))
         return output
+
+    async def get_users_from_old_guild_table(self, guild: str):
+        records = await self.model.dbpool.fetch(
+            f"SELECT * FROM players_{guild}"
+        )
+        return records
