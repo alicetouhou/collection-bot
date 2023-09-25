@@ -28,7 +28,7 @@ async def populate(ctx: crescent.Context):
 @admin_group.child
 @crescent.command(
     name="migratedata",
-    description="Migrate data from old scheme to new schema. However, make sure not to run command multiple times for same guild.",
+    description="Migrate data from old scheme to new schema. Do not run multiple times for same guild.",
     guild=int(os.environ["GUILD"]),
 )
 class migratedata:
@@ -96,3 +96,5 @@ class migratedata:
                 await user.increase_upgrade_level(Upgrades.DAILY_BONUS, int(upgrades_list[3]))
                 await user.increase_upgrade_level(Upgrades.WISHLIST_SIZE, int(upgrades_list[4]))
                 await user.increase_upgrade_level(Upgrades.WISHLIST_RATE_BONUS, int(upgrades_list[5]))
+
+        await ctx.respond(f"`Completed migration for guild {self.guild}!`")
