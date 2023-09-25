@@ -160,7 +160,7 @@ class TradeConfirmCommand:
         await ctx.respond(embed)
 
         await user_a.set_currency((await user_a.currency) + current_trade.b_currency - current_trade.a_currency)
-        await user_b.set_currency((await user_a.currency) + current_trade.a_currency - current_trade.b_currency)
+        await user_b.set_currency((await user_b.currency) + current_trade.a_currency - current_trade.b_currency)
 
         for character in current_trade.a_list:
             await user_a.remove_from_characters(character)
