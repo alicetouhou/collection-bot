@@ -103,7 +103,7 @@ class TradeCommand:
 
         await asyncio.sleep(180)
 
-        if current_trades[trade_id]:
+        if trade_id in current_trades:
             del current_trades[trade_id]
             await ctx.respond(
                 f"Timed out! {ctx.user.mention}'s and {other_user.mention}'s trade was not completed within 3 minutes."
