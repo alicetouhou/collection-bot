@@ -94,6 +94,14 @@ class TradeCommand:
             await ctx.respond("You cannot trade with yourself!")
             return
 
+        for trade in current_trades:
+            if current_trades[trade].a.id == ctx.user.id or current_trades[trade].b.id == ctx.user.id:
+                await ctx.respond(f"{ctx.user.mention}, you cannot start a trade if you're already in a trade.")
+                return
+            if current_trades[trade].a.id == other_user.id or current_trades[trade].b.id == other_user.id:
+                await ctx.respond(f"{other_user.mention} is already in a trade.")
+                return
+
         trade_id = "".join(random.choices(
             string.ascii_uppercase + string.digits, k=10))
 
