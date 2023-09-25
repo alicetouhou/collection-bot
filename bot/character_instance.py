@@ -6,6 +6,7 @@ from bot.character import Character
 if t.TYPE_CHECKING:
     from bot.model import Model
 
+
 class CharacterInstance(Character):
     def __init__(self, guild_id: hikari.Snowflake, character: Character, model: Model):
         self.guild_id = guild_id
@@ -31,24 +32,43 @@ class CharacterInstance(Character):
         return users
 
     async def get_wished_ids(self) -> list[int]:
-        return await self._select_user_ids_from_list("wishlist")
+        """Return all the users in the guild that wished this character."""
+        if self.model.dbpool is None:
+            return []
+
+        records = await self.model.dbpool.fetch(
+            f"SELECT player_id FROM wishlists WHERE guild_id = $1 AND character_id = $2",
+            str(self.guild_id),
+            self.id
+        )
+        return [x["player_id"] for x in records]
 
     async def get_claimed_id(self) -> int:
         """Return the player ID if the character is claimed. If else, return 0."""
-        ids = await self._select_user_ids_from_list("characters")
-        if len(ids) == 0:
+        if self.model.dbpool is None:
             return 0
-        return int(ids[0])
+
+        records = await self.model.dbpool.fetch(
+            f"SELECT player_id FROM claimed_characters WHERE guild_id = $1 AND character_id = $2",
+            str(self.guild_id),
+            self.id
+        )
+
+        if records:
+            return records[0]["player_id"]
+        return 0
 
     async def _get_embed(self, image) -> hikari.Embed:
         embed = await super()._get_embed(image)
         claimed_person_id = await self.get_claimed_id()
         if claimed_person_id == 0:
             return embed
-        claimed_person = self.model.bot.cache.get_member(self.guild_id, claimed_person_id)
+        claimed_person = self.model.bot.cache.get_member(
+            self.guild_id, claimed_person_id)
         if not claimed_person:
             claimed_person = await self.model.bot.rest.fetch_member(self.guild_id, claimed_person_id)
         if claimed_person:
-            embed.set_footer(f"Claimed by {claimed_person.username}", icon=claimed_person.avatar_url)
+            embed.set_footer(
+                f"Claimed by {claimed_person.username}", icon=claimed_person.avatar_url)
 
         return embed

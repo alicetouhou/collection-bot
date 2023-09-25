@@ -90,10 +90,10 @@ class TopCommand:
         user = await dbsearch.create_user(ctx.guild_id, ctx.user)
         character_list = await user.characters
 
-        params_list = [self.first, self.second,
-                       self.third, self.fourth, self.fifth]
+        params_list = [self.fifth, self.fourth,
+                       self.third, self.second, self.first]
 
-        for index, param in enumerate(params_list):
+        for param in params_list:
             if not param:
                 continue
 
@@ -102,8 +102,7 @@ class TopCommand:
             if not character:
                 continue
 
-            if len(character_list) >= index:
-                await user.reorder(character, index)
+            await user.move_to_top(character)
 
         if not self.second and not self.third and not self.fourth and not self.fifth:
             character = await plugin.model.utils.validate_search_in_list(ctx, user, self.first)

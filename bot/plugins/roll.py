@@ -187,7 +187,7 @@ async def roll_command(
     # is in bonus `len(wishlist)` times.
     bonus = 1 - (1 - bonus) ** len(wishlist)
 
-    if bonus:
+    if bonus and len(wishlist) > 0:
         random_number = random.random()
         if random_number < bonus:
             random_index = random.choice(wishlist)

@@ -53,12 +53,22 @@ class Model:
             return
 
         async with self.dbpool.acquire() as conn:
-            await conn.execute("CREATE TABLE IF NOT EXISTS servers (ID varchar(31), PRIMARY KEY (ID))")
+            await conn.execute("CREATE TABLE IF NOT EXISTS servers (id varchar(31), PRIMARY KEY (id))")
+
+            await conn.execute(
+                f"CREATE TABLE IF NOT EXISTS players (guild_id varchar(31) REFERENCES servers(id), player_id varchar(31), currency int, claims int, claimed_daily int, rolls int, claimed_rolls int, PRIMARY KEY (guild_id,player_id))"
+            )
+            await conn.execute(
+                f"CREATE TABLE IF NOT EXISTS claimed_characters (character_id int REFERENCES characters(id), guild_id varchar(31), player_id varchar(31), list_order int, default_image int, embed_color varchar(7), PRIMARY KEY (guild_id,character_id), FOREIGN KEY (guild_id,player_id) REFERENCES players(guild_id,player_id))"
+            )
+            await conn.execute(
+                f"CREATE TABLE IF NOT EXISTS wishlists (character_id int REFERENCES characters(id), guild_id varchar(31), player_id varchar(31), points smallint, PRIMARY KEY (character_id,guild_id,player_id), FOREIGN KEY (guild_id,player_id) REFERENCES players(guild_id,player_id))"
+            )
+            await conn.execute(
+                f"CREATE TABLE IF NOT EXISTS upgrades (guild_id varchar(31), player_id varchar(31), roll_regen smallint, roll_max smallint, daily_bonus smallint, fragment_bonus smallint, wishlist_size smallint, wishlist_rate_bonus smallint, PRIMARY KEY (guild_id,player_id), FOREIGN KEY (guild_id,player_id) REFERENCES players(guild_id,player_id))"
+            )
 
             for guild_id in guilds:
-                await conn.execute(
-                    f"CREATE TABLE IF NOT EXISTS players_{guild_id} (ID varchar(31), characters varchar(65535), currency int, claims int, claimed_daily int, rolls int, claimed_rolls int, wishlist varchar(1027), upgrades varchar(2055), PRIMARY KEY (ID))"
-                )
                 await conn.execute(f"INSERT INTO servers VALUES ({guild_id}) ON CONFLICT DO NOTHING")
 
     @property
