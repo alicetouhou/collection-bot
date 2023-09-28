@@ -153,6 +153,7 @@ class Utils:
                 (   
                     character_id int references characters(id),
                     image varchar(255),
+                    index int,
                     PRIMARY KEY (character_id,image)
                 )
                 """
@@ -196,10 +197,10 @@ class Utils:
             await conn.executemany(
                 """
                 INSERT INTO character_images 
-                (character_id, image) 
-                VALUES ($1, $2) 
+                (character_id, image, index) 
+                VALUES ($1, $2, $3) 
                 ON CONFLICT DO NOTHING""",
-                [[int(x[0]), x[1]] for x in images_data],
+                [[int(x[0]), x[1], i] for i, x in enumerate(images_data)],
             )
 
             await conn.execute("ALTER TABLE claimed_characters ADD FOREIGN KEY (character_id) REFERENCES characters(id)")

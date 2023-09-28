@@ -23,7 +23,7 @@ class Character:
     @classmethod
     def from_record(cls, data: asyncpg.Record, series: list[asyncpg.Record], images: list[asyncpg.Record]) -> t.Self:
         return cls(
-            [x["image"] for x in images],
+            [x["image"] for x in sorted(images, key=lambda x: x['index'])],
             data["id"],
             data["first_name"],
             data["last_name"],

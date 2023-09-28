@@ -37,7 +37,7 @@ class DBSearch:
                 id,
             )
             images_info = await self.model.dbpool.fetch(
-                "SELECT image FROM character_images WHERE character_id = $1",
+                "SELECT image,index FROM character_images WHERE character_id = $1",
                 id,
             )
             character = Character.from_record(
