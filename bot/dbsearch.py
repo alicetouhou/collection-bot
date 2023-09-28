@@ -48,31 +48,6 @@ class DBSearch:
         except IndexError:
             return None
 
-    async def get_series_list_from_partial_name(self, search: str) -> list[asyncpg.Record]:
-        series_list = (await self.model.dbpool.fetch(
-            "SELECT * FROM series WHERE series_name ILIKE $1 LIMIT 10",
-            search
-        ))
-
-        if len(series_list) == 0:
-            return []
-
-        complete_list: asyncpg.Record = []
-        for series in series_list:
-            if len(complete_list) >= 20:
-                return complete_list
-            if series["type"] == "bucket":
-                series_list = await self.model.dbpool.fetch(
-                    "SELECT series_id FROM buckets WHERE bucket_id = $1",
-                    series["id"],
-                )
-            series_correspondences = await self.model.dbpool.fetch(
-                "SELECT character_id FROM character_series WHERE series_id = $1",
-                series["id"],
-            )
-            complete_list += series_correspondences
-        return complete_list
-
     async def create_character_from_search(
         self, guild_id: hikari.Snowflake, search: str, limit=20, filter_str=None
     ) -> list[CharacterInstance]:
@@ -87,20 +62,20 @@ class DBSearch:
 
         searches = ["%" + x + "%" for x in search_split]
 
-        sql = "SELECT * FROM characters WHERE ("
+        sql = "SELECT * FROM characters "
 
-        for index, sear in enumerate(searches):
+        for index, s in enumerate(searches):
             sql += f"""AND (
                 first_name ILIKE ${index+1}
                 OR last_name ILIKE ${index+1} 
+                OR id IN (
+                    SELECT character_id FROM character_series WHERE series_id IN 
+                        (SELECT id FROM series WHERE series_name ILIKE ${index+1})
+                    )
+                )
                 """
-            series_list = await self.get_series_list_from_partial_name(sear)
-            if len(series_list) > 0:
-                sql += f"""OR id IN ({','.join([f"'" + str(x["character_id"]) + "'" for x in series_list])})"""
-            sql += """) """
-        sql += ")"
 
-        sql = sql.replace("AND", "", 1)
+        sql = sql.replace("AND", "WHERE", 1)
 
         if filter_str:
             sql += f""" AND id IN ({','.join([f"'{x}'" for x in filter_str])})"""

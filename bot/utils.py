@@ -209,7 +209,7 @@ class Utils:
         pass
 
     async def character_search_autocomplete(
-        self, ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
+        self, ctx: crescent.AutocompleteContext
     ) -> list[tuple[str, str]]:
         options = ctx.options
 
@@ -243,7 +243,7 @@ class Utils:
         character_list = await self.model.dbsearch.create_character_from_search(
             ctx.guild_id,
             options[option],
-            filter=char_filter
+            filter_str=char_filter
         )
 
         output = []
