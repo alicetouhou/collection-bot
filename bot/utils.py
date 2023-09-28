@@ -71,35 +71,89 @@ class Utils:
 
         return selected_character[0]
 
+    def read_csv_with_header(self, path: str) -> list[list[t.Any]]:
+        file = open(path, "r", encoding="utf8")
+        character_reader = csv.reader(file, delimiter="|")
+        next(character_reader)
+        data = []
+        for x in character_reader:
+            data.append(x)
+        return data
+
     async def add_characters_to_db(self) -> None:
         if self.model.dbpool is None:
             return
 
         async with self.model.dbpool.acquire() as conn:
-            f = open("bot/data/db.csv", "r", encoding="utf8")
-            reader = csv.reader(f, delimiter="|")
-            next(reader)
-            data = []
-            for x in reader:
-                try:
-                    data.append([int(x[0]), x[1], x[2], x[3],
-                                x[4], int(x[5]), x[6], x[7]])
-                except IndexError:
-                    print(f"Error adding: {x}")
+            characters_data = self.read_csv_with_header("bot/data/db.csv")
+            series_data = self.read_csv_with_header("bot/data/series.csv")
+            buckets_correspondences = self.read_csv_with_header(
+                "bot/data/bucket_correspondences.csv")
+            correspondences_data = self.read_csv_with_header(
+                "bot/data/series_correspondences.csv")
+            images_data = self.read_csv_with_header(
+                "bot/data/images_correspondences.csv")
 
+            await conn.execute("ALTER TABLE IF EXISTS claimed_characters DROP CONSTRAINT IF EXISTS claimed_characters_character_id_fkey")
+            await conn.execute("ALTER TABLE IF EXISTS wishlists DROP CONSTRAINT IF EXISTS wishlists_character_id_fkey")
+            await conn.execute("ALTER TABLE IF EXISTS character_series DROP CONSTRAINT IF EXISTS character_series_series_id_fkey")
+            await conn.execute("ALTER TABLE IF EXISTS character_images DROP CONSTRAINT IF EXISTS character_images_character_id_fkey")
+
+            await conn.execute("DROP TABLE IF EXISTS character_series")
+            await conn.execute("DROP TABLE IF EXISTS character_images")
+            await conn.execute("DROP TABLE IF EXISTS buckets")
+            await conn.execute("DROP TABLE IF EXISTS series")
             await conn.execute("DROP TABLE IF EXISTS characters")
+
             await conn.execute(
                 """CREATE TABLE characters
                 (   
-                    ID int, 
+                    id int, 
                     first_name varchar(255), 
                     last_name varchar(255), 
-                    anime_list varchar(1027), 
-                    pictures varchar(2055), 
                     value int, 
-                    manga_list varchar(1027), 
-                    games_list varchar(1027), 
-                    PRIMARY KEY (ID)
+                    PRIMARY KEY (id)
+                )
+                """
+            )
+
+            await conn.execute(
+                """CREATE TABLE series
+                (   
+                    id int,
+                    series_name varchar(255), 
+                    type varchar(15),
+                    PRIMARY KEY (id)
+                )
+                """
+            )
+
+            await conn.execute(
+                """CREATE TABLE buckets
+                (   
+                    bucket_id int,
+                    series_id int,
+                    PRIMARY KEY (bucket_id,series_id)
+                )
+                """
+            )
+
+            await conn.execute(
+                """CREATE TABLE character_series
+                (   
+                    character_id int references characters(id),
+                    series_id int,
+                    PRIMARY KEY (character_id,series_id)
+                )
+                """
+            )
+
+            await conn.execute(
+                """CREATE TABLE character_images
+                (   
+                    character_id int references characters(id),
+                    image varchar(255),
+                    PRIMARY KEY (character_id,image)
                 )
                 """
             )
@@ -107,10 +161,52 @@ class Utils:
             await conn.executemany(
                 """
                 INSERT INTO characters 
-                (ID, first_name, last_name, anime_list, pictures, value, manga_list, games_list) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
-                data,
+                (id, first_name, last_name, value) 
+                VALUES ($1, $2, $3, $4)""",
+                [[int(x[0]), x[1], x[2], int(x[5])] for x in characters_data],
             )
+
+            await conn.executemany(
+                """
+                INSERT INTO series 
+                (id, series_name, type) 
+                VALUES ($1, $2, $3) 
+                ON CONFLICT DO NOTHING""",
+                [[int(x[0]), x[1], x[2]] for x in series_data],
+            )
+
+            await conn.executemany(
+                """
+                INSERT INTO character_series 
+                (character_id, series_id) 
+                VALUES ($1, $2) 
+                ON CONFLICT DO NOTHING""",
+                [[int(x[0]), int(x[1])] for x in correspondences_data],
+            )
+
+            await conn.executemany(
+                """
+                INSERT INTO buckets 
+                (bucket_id, series_id) 
+                VALUES ($1, $2) 
+                ON CONFLICT DO NOTHING""",
+                [[int(x[0]), int(x[1])] for x in buckets_correspondences],
+            )
+
+            await conn.executemany(
+                """
+                INSERT INTO character_images 
+                (character_id, image) 
+                VALUES ($1, $2) 
+                ON CONFLICT DO NOTHING""",
+                [[int(x[0]), x[1]] for x in images_data],
+            )
+
+            await conn.execute("ALTER TABLE claimed_characters ADD FOREIGN KEY (character_id) REFERENCES characters(id)")
+            await conn.execute("ALTER TABLE wishlists ADD FOREIGN KEY (character_id) REFERENCES characters(id)")
+
+    async def save_correspondences(self):
+        pass
 
     async def character_search_autocomplete(
         self, ctx: crescent.AutocompleteContext, option: hikari.AutocompleteInteractionOption
@@ -127,7 +223,7 @@ class Utils:
 
         output = []
         for character in character_list:
-            name = f"{character.first_name} {character.last_name} ({character.get_series()[0]})"
+            name = f"{character.first_name} {character.last_name} ({(await character.get_series())[0]['series_name']})"
             if len(name) > 100:
                 name = name[0:98] + "..."
             output.append((name, str(character.id)))
@@ -152,7 +248,7 @@ class Utils:
 
         output = []
         for character in character_list:
-            name = f"{character.first_name} {character.last_name} ({character.get_series()[0]})"
+            name = f"{character.first_name} {character.last_name} ({(await character.get_series())[0]['series_name']})"
             if len(name) > 100:
                 name = name[0:98] + "..."
             output.append((name, str(character.id)))
@@ -163,3 +259,23 @@ class Utils:
             f"SELECT * FROM players_{guild}"
         )
         return records
+
+    async def get_series(self):
+        records = await self.model.dbpool.fetch(
+            f"SELECT * FROM series"
+        )
+        return records
+
+    async def get_characters(self):
+        records = await self.model.dbpool.fetch(
+            f"SELECT * FROM characters"
+        )
+        return records
+
+    async def get_series_id_from_name(self, name: str, type: str):
+        records = await self.model.dbpool.fetch(
+            f"SELECT id FROM series WHERE series_name = $1 AND type = $2",
+            name,
+            type
+        )
+        return records[0]

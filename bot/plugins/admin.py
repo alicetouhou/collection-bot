@@ -2,6 +2,7 @@ import os
 
 import crescent
 import hikari
+import csv
 
 from bot.upgrades import Upgrades
 from bot.model import Plugin
@@ -22,6 +23,108 @@ async def populate(ctx: crescent.Context):
     await ctx.respond("`Running command to add characters....`")
     await plugin.model.utils.add_characters_to_db()
     await ctx.respond("`Characters added!`")
+
+
+@plugin.include
+@admin_group.child
+@crescent.command(
+    name="savecorrespondences",
+    description="Add corrospondences to CSV from database.",
+    guild=int(os.environ["GUILD"]),
+)
+async def save_correspondences(ctx: crescent.Context):
+    await ctx.respond("`Running command to save correspondences....`")
+    file = open("bot\data\series_correspondences.csv",
+                "w", newline="", encoding="utf8")
+
+    character_file = open("bot/data/db.csv", "r", encoding="utf8")
+    reader = csv.reader(character_file, delimiter="|")
+    next(reader)
+    data = []
+    series_correspondences: list[list[int]] = []
+    for x in reader:
+        try:
+            data.append([x[0], x[3], x[6], x[7]])
+
+        except IndexError:
+            print(f"Error adding: {x}")
+
+    for row in data:
+        for series in row[1].split(","):
+            if series == '':
+                continue
+            series_id = await plugin.model.utils.get_series_id_from_name(series, "anime")
+            series_correspondences.append([int(row[0]), series_id["id"]])
+        for series in row[2].split(","):
+            if series == '':
+                continue
+            series_id = await plugin.model.utils.get_series_id_from_name(series, "manga")
+            series_correspondences.append([int(row[0]), series_id["id"]])
+        for series in row[3].split(","):
+            if series == '':
+                continue
+            series_id = await plugin.model.utils.get_series_id_from_name(series, "game")
+            series_correspondences.append([int(row[0]), series_id["id"]])
+
+    writer = csv.writer(file, delimiter="|")
+    writer.writerow(("character_id", "series_id"))
+    writer.writerows([[x[0], x[1]] for x in series_correspondences])
+    await ctx.respond("`Complete!`")
+
+# @plugin.include
+# @admin_group.child
+# @crescent.command(
+#     name="savebuckets",
+#     description="Add series buckets automatically. Mistakes will probably be made.",
+#     guild=int(os.environ["GUILD"]),
+# )
+# async def save_buckets(ctx: crescent.Context):
+#     await ctx.respond("`Running command to save buckets....`")
+#     file = open("bot\data\series.csv",
+#                 "r+", newline="", encoding="utf8")
+
+#     reader = csv.reader(file, delimiter="|")
+#     next(reader)
+#     series_list = []
+#     buckets: dict[int, dict[str, str | list[int]]] = {}
+#     for x in reader:
+#         try:
+#             series_list.append([x[0], x[1], x[2]])
+
+#         except IndexError:
+#             print(f"Error adding: {x}")
+
+#     current_name = ""
+#     current_id = 200000
+#     for row in series_list:
+#         if current_name == "" or current_name not in row[1]:
+#             current_name = row[1]
+#             buckets[current_id] = {
+#                 "name": row[1],
+#                 "series": []
+#             }
+#             current_id += 1
+#         buckets[current_id-1]["series"].append(int(row[0]))
+
+#     new_file = open("bot\data\\bucket_correspondences.csv",
+#                     "w", newline="", encoding="utf8")
+
+#     buckets_list = []
+#     buckets_name = []
+#     for key in buckets:
+#         if len(buckets[key]["series"]) == 1:
+#             continue
+#         buckets_name.append([key, buckets[key]["name"], "bucket"])
+#         for item in buckets[key]["series"]:
+#             buckets_list.append([str(key), str(item)])
+
+#     writer = csv.writer(new_file, delimiter="|")
+#     writer.writerow(("bucket_id", "series_id"))
+#     writer.writerows(buckets_list)
+
+#     original_writer = csv.writer(file, delimiter="|")
+#     original_writer.writerows(buckets_name)
+#     await ctx.respond("`Complete!`")
 
 
 @plugin.include

@@ -2,6 +2,9 @@ from __future__ import annotations
 import hikari
 import typing as t
 from bot.character import Character
+from miru.ext import nav
+import copy
+import asyncpg
 
 if t.TYPE_CHECKING:
     from bot.model import Model
@@ -10,26 +13,16 @@ if t.TYPE_CHECKING:
 class CharacterInstance(Character):
     def __init__(self, guild_id: hikari.Snowflake, character: Character, model: Model):
         self.guild_id = guild_id
-        self._guild_str = f"players_{guild_id}"
         self.model = model
+        self.series_names: list[asyncpg.Record] = []
         super().__init__(
             first_name=character.first_name,
             last_name=character.last_name,
-            anime=character.anime,
-            manga=character.manga,
-            games=character.games,
+            series=character.series,
             images=character.images,
             id=character.id,
             favorites=character.value,
         )
-
-    async def _select_user_ids_from_list(self, list) -> list[int]:
-        records = await self.model.dbpool.fetch(f"SELECT id, {list} FROM {self._guild_str}")
-        users = []
-        for record in records:
-            if str(self.id) in record[list].split(","):
-                users.append(record["id"])
-        return users
 
     async def get_wished_ids(self) -> list[int]:
         """Return all the users in the guild that wished this character."""
@@ -58,8 +51,52 @@ class CharacterInstance(Character):
             return records[0]["player_id"]
         return 0
 
+    async def get_series(self) -> list[asyncpg.Record]:
+        if len(self.series_names) == 0:
+            self.series_names = []
+
+            bucket = await self.model.dbpool.fetchval(
+                f"SELECT bucket_id FROM buckets WHERE series_id = $1",
+                self.series[0]
+            )
+
+            if bucket:
+                record = await self.model.dbpool.fetchrow(
+                    f"SELECT series_name,type FROM series WHERE id = $1",
+                    bucket
+                )
+                self.series_names = [record]
+                return self.series_names
+
+            records: list[asyncpg.Record] = []
+            for series in self.series:
+                record = await self.model.dbpool.fetchrow(
+                    f"SELECT series_name,type FROM series WHERE id = $1",
+                    series
+                )
+                records.append(record)
+            self.series_names = records
+        return self.series_names
+
+    def get_series_icon(self, series: asyncpg.Record):
+        if series["type"] == "bucket":
+            return "📚"
+        if series["type"] == "anime":
+            return "🎬"
+        if series["type"] == "manga":
+            return "📖"
+        if series["type"] == "game":
+            return "🎮"
+        return ""
+
     async def _get_embed(self, image) -> hikari.Embed:
-        embed = await super()._get_embed(image)
+        name = f"{self.first_name} {self.last_name} • {self.value}<:wishfragments:1148459769980530740>"
+        await self.get_series()
+
+        embed = hikari.Embed(title=name, color="f598df",
+                             description=",".join([f'{self.get_series_icon(x)} {x["series_name"]}' for x in self.series_names]))
+        embed.set_image(image)
+
         claimed_person_id = await self.get_claimed_id()
         if claimed_person_id == 0:
             return embed
@@ -70,5 +107,21 @@ class CharacterInstance(Character):
         if claimed_person:
             embed.set_footer(
                 f"Claimed by {claimed_person.username}", icon=claimed_person.avatar_url)
+        return embed
 
+    async def get_navigator(self) -> nav.NavigatorView:
+        pages = []
+        embed = await self._get_embed(self.images[0])
+
+        for image in self.images:
+            new_embed = copy.deepcopy(embed)
+            new_embed.set_image(image)
+            pages.append(new_embed)
+
+        buttons = [nav.PrevButton(), nav.IndicatorButton(), nav.NextButton()]
+        navigator = nav.NavigatorView(pages=pages, buttons=buttons)
+        return navigator
+
+    async def get_claimable_embed(self) -> hikari.Embed:
+        embed = await self._get_embed(self.images[0])
         return embed

@@ -1,3 +1,6 @@
+from __future__ import annotations
+import typing as t
+import asyncpg
 from bot.character import Character
 from bot.character_instance import CharacterInstance
 from bot.user import User
@@ -5,9 +8,12 @@ from bot.user import User
 import hikari
 import re
 
+if t.TYPE_CHECKING:
+    from bot.model import Model
+
 
 class DBSearch:
-    def __init__(self, model):
+    def __init__(self, model: "Model"):
         self.model = model
 
     async def create_user(self, guild_id: hikari.Snowflake, player_id: hikari.User) -> User:
@@ -22,54 +28,87 @@ class DBSearch:
     async def create_character_from_id(self, guild_id: hikari.Snowflake, id: int) -> CharacterInstance | None:
         """Returns `Character` if one exists with the ID. Otherwise, `None` is returned."""
         try:
-            records = await self.model.dbpool.fetch(
+            char_info = await self.model.dbpool.fetch(
                 "SELECT * FROM characters WHERE ID = $1",
                 id,
             )
-            character = Character.from_record(records[0])
+            series_info = await self.model.dbpool.fetch(
+                "SELECT series_id FROM character_series WHERE character_id = $1",
+                id,
+            )
+            images_info = await self.model.dbpool.fetch(
+                "SELECT image FROM character_images WHERE character_id = $1",
+                id,
+            )
+            character = Character.from_record(
+                char_info[0], series=series_info, images=images_info)
+
             instance = CharacterInstance(guild_id, character, self.model)
             return instance
         except IndexError:
             return None
 
+    async def get_series_list_from_partial_name(self, search: str) -> list[asyncpg.Record]:
+        series_list = (await self.model.dbpool.fetch(
+            "SELECT * FROM series WHERE series_name ILIKE $1 LIMIT 10",
+            search
+        ))
+
+        if len(series_list) == 0:
+            return []
+
+        complete_list: asyncpg.Record = []
+        for series in series_list:
+            if len(complete_list) >= 20:
+                return complete_list
+            if series["type"] == "bucket":
+                series_list = await self.model.dbpool.fetch(
+                    "SELECT series_id FROM buckets WHERE bucket_id = $1",
+                    series["id"],
+                )
+            series_correspondences = await self.model.dbpool.fetch(
+                "SELECT character_id FROM character_series WHERE series_id = $1",
+                series["id"],
+            )
+            complete_list += series_correspondences
+        return complete_list
+
     async def create_character_from_search(
-        self, guild_id: hikari.Snowflake, search: str, limit=20, filter=None
+        self, guild_id: hikari.Snowflake, search: str, limit=20, filter_str=None
     ) -> list[CharacterInstance]:
         search_split = search.split(" ")
 
         if len(search_split) == 1 and re.match("\d+", search_split[0]):
             id_character = await self.create_character_from_id(guild_id, int(search_split[0]))
 
-            if id_character and (filter == None or id_character.id in filter):
+            if id_character and (filter_str == None or id_character.id in filter_str):
                 return [id_character]
             return []
 
-        sql = "SELECT * FROM characters "
+        searches = ["%" + x + "%" for x in search_split]
 
-        for index, search in enumerate(search_split):
+        sql = "SELECT * FROM characters WHERE ("
+
+        for index, sear in enumerate(searches):
             sql += f"""AND (
-                LOWER(first_name) LIKE LOWER(${index+1}) 
-                OR LOWER(last_name) LIKE LOWER(${index+1}) 
-                OR LOWER(anime_list) LIKE LOWER(${index+1}) 
-                OR LOWER(manga_list) LIKE LOWER(${index+1}) 
-                OR LOWER(games_list) LIKE LOWER(${index+1})) 
-                """.replace(
-                "\n", ""
-            ).replace(
-                "                ", ""
-            )
+                first_name ILIKE ${index+1}
+                OR last_name ILIKE ${index+1} 
+                """
+            series_list = await self.get_series_list_from_partial_name(sear)
+            if len(series_list) > 0:
+                sql += f"""OR id IN ({','.join([f"'" + str(x["character_id"]) + "'" for x in series_list])})"""
+            sql += """) """
+        sql += ")"
 
-        sql = sql.replace("AND", "WHERE", 1)
+        sql = sql.replace("AND", "", 1)
 
-        if filter:
-            sql += f""" AND id IN ({','.join([f"'{x}'" for x in filter])})"""
+        if filter_str:
+            sql += f""" AND id IN ({','.join([f"'{x}'" for x in filter_str])})"""
 
-        sql += "ORDER BY LOWER(first_name) ILIKE $1 OR NULL, LOWER(last_name) ILIKE $1 OR NULL, LOWER(anime_list) ILIKE $1 OR NULL, LOWER(manga_list) ILIKE $1 OR NULL, LOWER(games_list) ILIKE $1 OR NULL"
+        sql += "ORDER BY first_name ILIKE $1 OR NULL, last_name ILIKE $1 OR NULL"
 
         if limit:
             sql += f" LIMIT {str(limit)}"
-
-        searches = ["%" + x + "%" for x in search_split]
 
         records = await self.model.dbpool.fetch(
             sql,
@@ -78,15 +117,32 @@ class DBSearch:
 
         output = []
         for record in records:
+            series_info = await self.model.dbpool.fetch(
+                "SELECT series_id FROM character_series WHERE character_id = $1",
+                record["id"],
+            )
             output.append(CharacterInstance(
-                guild_id, Character.from_record(record), self.model))
+                guild_id, Character.from_record(record, series_info, []), self.model))
 
         return output
 
     async def create_random_character(self, context) -> CharacterInstance:
-        records = await self.model.dbpool.fetch(
+        char_info = await self.model.dbpool.fetch(
             "SELECT * FROM characters ORDER BY RANDOM() LIMIT 1",
         )
-        character = Character.from_record(records[0])
+
+        id = char_info[0]["id"]
+
+        series_info = await self.model.dbpool.fetch(
+            "SELECT series_id FROM character_series WHERE character_id = $1",
+            id,
+        )
+        images_info = await self.model.dbpool.fetch(
+            "SELECT image FROM character_images WHERE character_id = $1",
+            id,
+        )
+
+        character = Character.from_record(
+            char_info[0], series=series_info, images=images_info)
         instance = CharacterInstance(context, character, self.model)
         return instance
