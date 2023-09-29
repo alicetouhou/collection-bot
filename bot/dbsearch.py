@@ -28,28 +28,71 @@ class DBSearch:
     async def create_character_from_id(self, guild_id: hikari.Snowflake, id: int) -> CharacterInstance | None:
         """Returns `Character` if one exists with the ID. Otherwise, `None` is returned."""
         try:
-            char_info = await self.model.dbpool.fetch(
-                "SELECT * FROM characters WHERE ID = $1",
-                id,
+            records = await self.model.dbpool.fetch(
+                """SELECT characters.*, character_series.*, series.name AS series_name, series.type AS type, 
+                buckets.name AS bucket_name, character_images.image, character_images.index AS image_index
+                FROM characters
+                LEFT JOIN character_series ON characters.id = character_series.character_id
+                LEFT JOIN character_images ON characters.id = character_images.character_id
+                LEFT JOIN series ON character_series.series_id = series.id
+                LEFT JOIN buckets ON series.bucket = buckets.id
+                WHERE characters.id = $1""",
+                id
             )
-            series_info = await self.model.dbpool.fetch(
-                "SELECT series_id FROM character_series WHERE character_id = $1",
-                id,
-            )
-            images_info = await self.model.dbpool.fetch(
-                "SELECT image,index FROM character_images WHERE character_id = $1",
-                id,
-            )
-            character = Character.from_record(
-                char_info[0], series=series_info, images=images_info)
 
+            character = Character.from_record(
+                await self.create_combined_record(records))
             instance = CharacterInstance(guild_id, character, self.model)
             return instance
         except IndexError:
             return None
 
+    async def create_characters_from_ids(self, guild_id: hikari.Snowflake, ids: list[int]) -> list[CharacterInstance]:
+        """Returns `list[Character]` for the IDs inputted. Only the name, id, and value are available."""
+        try:
+            records = await self.model.dbpool.fetch(
+                f"""SELECT * FROM characters WHERE id IN ({','.join([f"'{x}'" for x in ids])})""")
+
+            output = []
+            for record in records:
+                character = Character.from_record(
+                    await self.create_combined_record([record]))
+                instance = CharacterInstance(guild_id, character, self.model)
+                output.append(instance)
+            return output
+        except IndexError:
+            return []
+
+    async def create_combined_record(self, records: list[asyncpg.Record]) -> dict[str, t.Any]:
+        images: list[dict[str, str | int]] = []
+        series: list[dict[str, t.Any]] = []
+
+        for r in records:
+            if "image" in r:
+                images_entry = {"image": r["image"],
+                                "image_index": r["image_index"]
+                                }
+                if images_entry not in images:
+                    images.append(images_entry)
+            if "series_name" in r:
+                series_entry = {"name": r["series_name"], "type": r["type"]}
+                if series_entry not in series:
+                    series.append(series_entry)
+
+        combined_record: asyncpg.Record = {
+            "id": records[0]["id"],
+            "first_name": records[0]["first_name"],
+            "last_name": records[0]["last_name"],
+            "value": records[0]["value"],
+            "images": images,
+            "series": series,
+            "bucket": {"name": records[0]["bucket_name"], "type": "bucket"} if "bucket_name" in records[0] and records[0]["bucket_name"] else None
+        }
+
+        return combined_record
+
     async def create_character_from_search(
-        self, guild_id: hikari.Snowflake, search: str, limit=20, filter_str=None
+        self, guild_id: hikari.Snowflake, search: str, limit=100, filter_str=None
     ) -> list[CharacterInstance]:
         search_split = search.split(" ")
 
@@ -62,15 +105,19 @@ class DBSearch:
 
         searches = ["%" + x + "%" for x in search_split]
 
-        sql = "SELECT * FROM characters "
+        sql = """SELECT characters.*, character_series.*, series.name AS series_name, series.type AS type, buckets.name AS bucket_name
+            FROM characters
+            LEFT JOIN character_series ON characters.id = character_series.character_id
+            LEFT JOIN series ON character_series.series_id = series.id
+            LEFT JOIN buckets ON series.bucket = buckets.id """
 
         for index, s in enumerate(searches):
             sql += f"""AND (
                 first_name ILIKE ${index+1}
                 OR last_name ILIKE ${index+1} 
-                OR id IN (
+                OR characters.id IN (
                     SELECT character_id FROM character_series WHERE series_id IN 
-                        (SELECT id FROM series WHERE series_name ILIKE ${index+1})
+                        (SELECT series.id FROM series WHERE name ILIKE ${index+1})
                     )
                 )
                 """
@@ -90,34 +137,50 @@ class DBSearch:
             *searches,
         )
 
-        output = []
+        output: list[CharacterInstance] = []
         for record in records:
-            series_info = await self.model.dbpool.fetch(
-                "SELECT series_id FROM character_series WHERE character_id = $1",
-                record["id"],
-            )
-            output.append(CharacterInstance(
-                guild_id, Character.from_record(record, series_info, []), self.model))
+            if len(output) >= 20:
+                break
+            if record["character_id"] not in [x.id for x in output]:
+                output.append(CharacterInstance(
+                    guild_id, Character.from_record(await self.create_combined_record([record])), self.model))
 
         return output
 
     async def create_random_character(self, context) -> CharacterInstance:
-        char_info = await self.model.dbpool.fetch(
-            "SELECT * FROM characters ORDER BY RANDOM() LIMIT 1",
-        )
-
-        id = char_info[0]["id"]
-
-        series_info = await self.model.dbpool.fetch(
-            "SELECT series_id FROM character_series WHERE character_id = $1",
-            id,
-        )
-        images_info = await self.model.dbpool.fetch(
-            "SELECT image FROM character_images WHERE character_id = $1",
-            id,
+        records = await self.model.dbpool.fetch(
+            """SELECT characters.*, character_series.*, series.name AS series_name, series.type AS type, 
+            buckets.name AS bucket_name, character_images.image, character_images.index AS image_index
+            FROM characters
+            LEFT JOIN character_series ON characters.id = character_series.character_id
+            LEFT JOIN character_images ON characters.id = character_images.character_id
+            LEFT JOIN series ON character_series.series_id = series.id
+            LEFT JOIN buckets ON series.bucket = buckets.id
+            WHERE characters.id = (SELECT id FROM characters ORDER BY RANDOM() LIMIT 1)""",
         )
 
         character = Character.from_record(
-            char_info[0], series=series_info, images=images_info)
+            await self.create_combined_record(records))
         instance = CharacterInstance(context, character, self.model)
         return instance
+
+    async def get_series_from_search(self, search: str) -> list[str]:
+
+        search = f"%{search}%"
+
+        records = await self.model.dbpool.fetch(
+            """
+            SELECT * FROM
+                (SELECT name FROM series WHERE name ILIKE $1
+                UNION
+                SELECT name FROM buckets WHERE name ILIKE $1)
+            ORDER BY name ILIKE $1 LIMIT 5
+            """,
+            search
+        )
+
+        output = []
+        for record in records:
+            output.append(record["name"])
+
+        return output

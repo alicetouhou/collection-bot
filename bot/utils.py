@@ -85,11 +85,12 @@ class Utils:
             return
 
         async with self.model.dbpool.acquire() as conn:
-            characters_data = self.read_csv_with_header("bot/data/db.csv")
-            series_data = self.read_csv_with_header("bot/data/series.csv")
-            buckets_correspondences = self.read_csv_with_header(
-                "bot/data/bucket_correspondences.csv")
-            correspondences_data = self.read_csv_with_header(
+            characters = self.read_csv_with_header(
+                "bot/data/characters.csv")
+            series = self.read_csv_with_header("bot/data/series.csv")
+            buckets = self.read_csv_with_header(
+                "bot/data/buckets.csv")
+            character_series = self.read_csv_with_header(
                 "bot/data/series_correspondences.csv")
             images_data = self.read_csv_with_header(
                 "bot/data/images_correspondences.csv")
@@ -98,6 +99,7 @@ class Utils:
             await conn.execute("ALTER TABLE IF EXISTS wishlists DROP CONSTRAINT IF EXISTS wishlists_character_id_fkey")
             await conn.execute("ALTER TABLE IF EXISTS character_series DROP CONSTRAINT IF EXISTS character_series_series_id_fkey")
             await conn.execute("ALTER TABLE IF EXISTS character_images DROP CONSTRAINT IF EXISTS character_images_character_id_fkey")
+            await conn.execute("ALTER TABLE IF EXISTS series DROP CONSTRAINT IF EXISTS series_bucket_fkey")
 
             await conn.execute("DROP TABLE IF EXISTS character_series")
             await conn.execute("DROP TABLE IF EXISTS character_images")
@@ -118,22 +120,23 @@ class Utils:
             )
 
             await conn.execute(
-                """CREATE TABLE series
+                """CREATE TABLE buckets
                 (   
                     id int,
-                    series_name varchar(255), 
-                    type varchar(15),
+                    name varchar(255),
                     PRIMARY KEY (id)
                 )
                 """
             )
 
             await conn.execute(
-                """CREATE TABLE buckets
+                """CREATE TABLE series
                 (   
-                    bucket_id int,
-                    series_id int,
-                    PRIMARY KEY (bucket_id,series_id)
+                    id int,
+                    name varchar(255), 
+                    type varchar(15),
+                    bucket int references buckets(id),
+                    PRIMARY KEY (id)
                 )
                 """
             )
@@ -142,7 +145,7 @@ class Utils:
                 """CREATE TABLE character_series
                 (   
                     character_id int references characters(id),
-                    series_id int,
+                    series_id int references series(id),
                     PRIMARY KEY (character_id,series_id)
                 )
                 """
@@ -164,16 +167,26 @@ class Utils:
                 INSERT INTO characters 
                 (id, first_name, last_name, value) 
                 VALUES ($1, $2, $3, $4)""",
-                [[int(x[0]), x[1], x[2], int(x[5])] for x in characters_data],
+                [[int(x[0]), x[1], x[2], int(x[3])] for x in characters],
+            )
+
+            await conn.executemany(
+                """
+                INSERT INTO buckets 
+                (id, name) 
+                VALUES ($1, $2) 
+                ON CONFLICT DO NOTHING""",
+                [[int(x[0]), x[1]] for x in buckets],
             )
 
             await conn.executemany(
                 """
                 INSERT INTO series 
-                (id, series_name, type) 
-                VALUES ($1, $2, $3) 
+                (id, name, type, bucket) 
+                VALUES ($1, $2, $3, $4) 
                 ON CONFLICT DO NOTHING""",
-                [[int(x[0]), x[1], x[2]] for x in series_data],
+                [[int(x[0]), x[1], x[2], int(x[3])] if int(x[3]) > 0 else [
+                    int(x[0]), x[1], x[2], None] for x in series],
             )
 
             await conn.executemany(
@@ -182,16 +195,7 @@ class Utils:
                 (character_id, series_id) 
                 VALUES ($1, $2) 
                 ON CONFLICT DO NOTHING""",
-                [[int(x[0]), int(x[1])] for x in correspondences_data],
-            )
-
-            await conn.executemany(
-                """
-                INSERT INTO buckets 
-                (bucket_id, series_id) 
-                VALUES ($1, $2) 
-                ON CONFLICT DO NOTHING""",
-                [[int(x[0]), int(x[1])] for x in buckets_correspondences],
+                [[int(x[0]), int(x[1])] for x in character_series],
             )
 
             await conn.executemany(
@@ -210,7 +214,7 @@ class Utils:
         pass
 
     async def character_search_autocomplete(
-        self, ctx: crescent.AutocompleteContext
+        self, ctx: crescent.AutocompleteContext, include_series=False
     ) -> list[tuple[str, str]]:
         options = ctx.options
 
@@ -224,16 +228,20 @@ class Utils:
 
         output = []
         for character in character_list:
-            name = f"{character.first_name} {character.last_name} ({(await character.get_series())[0]['series_name']})"
+            name = f"{character.first_name} {character.last_name} ({character.get_top_series()['name']})"
             if len(name) > 100:
                 name = name[0:98] + "..."
             output.append((name, str(character.id)))
+
+        if include_series == True:
+            series_list = await self.model.dbsearch.get_series_from_search(options["search"])
+            for s in series_list:
+                output.insert(0, (s, s))
         return output
 
     async def character_search_in_list_autocomplete(
         self, ctx: crescent.AutocompleteContext, option: str = "search", char_filter=None,
     ) -> list[tuple[str, str]]:
-
         if not ctx.guild_id:
             return []
 
@@ -249,7 +257,7 @@ class Utils:
 
         output = []
         for character in character_list:
-            name = f"{character.first_name} {character.last_name} ({(await character.get_series())[0]['series_name']})"
+            name = f"{character.first_name} {character.last_name} ({character.get_top_series()['name']})"
             if len(name) > 100:
                 name = name[0:98] + "..."
             output.append((name, str(character.id)))

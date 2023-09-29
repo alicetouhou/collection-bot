@@ -200,10 +200,7 @@ async def write_to_file(session, characters: list[Character]):
     data = []
     ids_in_order: list[str] = []
     for x in reader:
-        if len(x) <= 7:
-            data.append([x[0], x[1], x[2], x[3], x[4], x[5], x[6], ""])
-        else:
-            data.append([x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]])
+        data.append([x[0], x[1], x[2], x[5]])
         ids_in_order.append(x[0])
 
     for char in characters:
@@ -230,10 +227,10 @@ async def write_to_file(session, characters: list[Character]):
             data.append([str(char.id), char.first_name, char.last_name, char.anime,
                         char.get_images_str(), str(char.get_value()), char.manga, char.game])
 
-    write_file = open("bot/data/db.csv", "w", newline='', encoding="utf8")
-    writer = csv.writer(write_file, delimiter="|")
-    writer.writerow(("id", "first_name", "last_name", "anime_list",
-                    "pictures", "value", "manga_list", "games_list"))
+    write_characters_file = open(
+        "bot/data/db.csv", "w", newline='', encoding="utf8")
+    writer = csv.writer(write_characters_file, delimiter="|")
+    writer.writerow(("id", "first_name", "last_name", "value"))
     writer.writerows(data)
 
 
@@ -245,7 +242,7 @@ async def add_series(session, series, index, type="anime"):
 
 async def get_series():
     async with aiohttp.ClientSession() as session:
-        # series_ids = await get_top_series_ids(session, 227, 173, type="manga")
+        series_ids = await get_top_series_ids(session, 227, 173, type="manga")
         series_ids = await get_series_from_ids(session, [12191, 603, 21511], type="anime")
         for i, series in enumerate(series_ids):
             while True:

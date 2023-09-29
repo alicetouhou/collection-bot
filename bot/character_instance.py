@@ -14,7 +14,6 @@ class CharacterInstance(Character):
     def __init__(self, guild_id: hikari.Snowflake, character: Character, model: Model):
         self.guild_id = guild_id
         self.model = model
-        self.series_names: list[asyncpg.Record] = []
         super().__init__(
             first_name=character.first_name,
             last_name=character.last_name,
@@ -22,6 +21,7 @@ class CharacterInstance(Character):
             images=character.images,
             id=character.id,
             favorites=character.value,
+            bucket=character.bucket
         )
 
     async def get_wished_ids(self) -> list[int]:
@@ -51,33 +51,6 @@ class CharacterInstance(Character):
             return records[0]["player_id"]
         return 0
 
-    async def get_series(self) -> list[asyncpg.Record]:
-        if len(self.series_names) == 0:
-            self.series_names = []
-
-            bucket = await self.model.dbpool.fetchval(
-                f"SELECT bucket_id FROM buckets WHERE series_id = $1",
-                self.series[0]
-            )
-
-            if bucket:
-                record = await self.model.dbpool.fetchrow(
-                    f"SELECT series_name,type FROM series WHERE id = $1",
-                    bucket
-                )
-                self.series_names = [record]
-                return self.series_names
-
-            records: list[asyncpg.Record] = []
-            for series in self.series:
-                record = await self.model.dbpool.fetchrow(
-                    f"SELECT series_name,type FROM series WHERE id = $1",
-                    series
-                )
-                records.append(record)
-            self.series_names = records
-        return self.series_names
-
     def get_series_icon(self, series: asyncpg.Record):
         if series["type"] == "bucket":
             return "📚"
@@ -89,12 +62,21 @@ class CharacterInstance(Character):
             return "🎮"
         return ""
 
+    def get_top_series(self):
+        if self.bucket:
+            return self.bucket
+        return self.series[0]
+
+    def get_series_list(self):
+        if self.bucket:
+            return f"{self.get_series_icon(self.bucket)} {self.bucket['name']}"
+        return ",".join([f'{self.get_series_icon(x)} {x["name"]}' for x in self.series])
+
     async def _get_embed(self, image) -> hikari.Embed:
         name = f"{self.first_name} {self.last_name} • {self.value}<:wishfragments:1148459769980530740>"
-        await self.get_series()
 
         embed = hikari.Embed(title=name, color="f598df",
-                             description=",".join([f'{self.get_series_icon(x)} {x["series_name"]}' for x in self.series_names]))
+                             description=self.get_series_list())
         embed.set_image(image)
 
         claimed_person_id = await self.get_claimed_id()

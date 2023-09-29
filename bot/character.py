@@ -10,24 +10,29 @@ class Character:
         id: int,
         first_name: str = "",
         last_name: str = "",
-        series: list[int] = [],
+        series: list[dict[str, str]] = [],
+        bucket: dict[str, str] | None = None,
         favorites: int = 0,
     ) -> None:
         self.first_name = first_name
         self.last_name = last_name
         self.series = series
+        self.bucket = bucket
         self.images = images
         self.id = id
         self.value = favorites
 
     @classmethod
-    def from_record(cls, data: asyncpg.Record, series: list[asyncpg.Record], images: list[asyncpg.Record]) -> t.Self:
+    def from_record(cls, data: dict[str, t.Any]) -> t.Self:
         return cls(
-            [x["image"] for x in sorted(images, key=lambda x: x['index'])],
+            [x["image"]
+                for x in sorted(data["images"], key=lambda x: x['image_index'])
+             ],
             data["id"],
             data["first_name"],
             data["last_name"],
-            [x["series_id"] for x in series],
+            data["series"],
+            data["bucket"],
             data["value"],
         )
 
