@@ -41,13 +41,15 @@ class ListCommand:
         characters = await user.characters
         character_list = await dbsearch.create_characters_from_ids(ctx.guild_id, characters[1:])
 
-        if character_list[0] is None:
+        first_character = await dbsearch.create_character_from_id(ctx.guild_id, characters[0])
+
+        if first_character is None:
             return
 
-        first_character = await dbsearch.create_character_from_id(ctx.guild_id, characters[0])
         if first_character:
             first_image = first_character.images[0]
 
+        character_list.insert(0, first_character)
         query_string = ""
 
         if self.search:

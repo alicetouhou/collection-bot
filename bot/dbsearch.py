@@ -51,7 +51,11 @@ class DBSearch:
         """Returns `list[Character]` for the IDs inputted. Only the name, id, and value are available."""
         try:
             records = await self.model.dbpool.fetch(
-                f"""SELECT * FROM characters WHERE id IN ({','.join([f"'{x}'" for x in ids])})""")
+                f"""SELECT * FROM characters
+                JOIN claimed_characters ON claimed_characters.character_id = characters.id
+                WHERE id IN ({','.join([f"'{x}'" for x in ids])})
+                ORDER BY claimed_characters.list_order
+                """)
 
             output = []
             for record in records:
@@ -125,7 +129,7 @@ class DBSearch:
         sql = sql.replace("AND", "WHERE", 1)
 
         if filter_str:
-            sql += f""" AND id IN ({','.join([f"'{x}'" for x in filter_str])})"""
+            sql += f""" AND characters.id IN ({','.join([f"'{x}'" for x in filter_str])})"""
 
         sql += "ORDER BY first_name ILIKE $1 OR NULL, last_name ILIKE $1 OR NULL"
 
@@ -173,7 +177,7 @@ class DBSearch:
             SELECT * FROM
                 (SELECT name FROM series WHERE name ILIKE $1
                 UNION
-                SELECT name FROM buckets WHERE name ILIKE $1)
+                SELECT name FROM buckets WHERE name ILIKE $1) AS seriesandbucketstable
             ORDER BY name ILIKE $1 LIMIT 5
             """,
             search
