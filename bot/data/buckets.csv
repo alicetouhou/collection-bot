@@ -1,6 +1,7 @@
 id|name
 200000|"""Oshi no Ko"""
 200001|Monogatari Series
+200002|K-On!
 200005|3-gatsu no Lion
 200007|5-toubun no Hanayome
 200008|86
@@ -64,8 +65,7 @@ id|name
 200187|Enen no Shouboutai
 200194|Eve no Jikan
 200197|Fairy Tail
-200200|Fate/Zero
-200205|Fate/stay night: Unlimited Blade Works
+200200|Fate
 200207|Final Fantasy XIV
 200210|Free!
 200211|Freezing
@@ -122,7 +122,6 @@ id|name
 200378|Jujutsu Kaisen
 200390|Kage no Jitsuryokusha ni Naritakute!
 200393|Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen
-200394|Kaguya-sama wa Kokurasetai: Ultra Romantic
 200396|Kaichou wa Maid-sama!
 200397|Kaifuku Jutsushi no Yarinaoshi
 200399|Kakegurui

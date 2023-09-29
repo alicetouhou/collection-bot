@@ -331,18 +331,18 @@ id|name|type|bucket
 31987|Fairy Tail|manga|200197
 57019|Fairy Tail Zerø|manga|200197
 23580|Fairy Tail: Final Series|anime|200197
-31572|Fate/Apocrypha|anime|0
-1877|Fate/Grand Order: Zettai Majuu Sensen Babylonia|anime|0
+31572|Fate/Apocrypha|anime|200200
+1877|Fate/Grand Order: Zettai Majuu Sensen Babylonia|anime|200200
 9934|Fate/Zero|anime|200200
 9813|Fate/Zero 2nd Season|anime|200200
-2489|Fate/kaleid liner Prisma☆Illya|anime|0
-11657|Fate/stay night Movie: Heaven's Feel - I. Presage Flower|anime|0
-11654|Fate/stay night Movie: Heaven's Feel - II. Lost Butterfly|anime|0
-20838|Fate/stay night Movie: Heaven's Feel - III. Spring Song|anime|0
-11656|Fate/stay night: Unlimited Blade Works|anime|200205
-16257|Fate/stay night: Unlimited Blade Works 2nd Season|anime|200205
-20203|Fate/stay night: Unlimited Blade Works Prologue|anime|200205
-1864|Fate/strange Fake: Whispers of Dawn|anime|0
+2489|Fate/kaleid liner Prisma☆Illya|anime|200200
+11657|Fate/stay night Movie: Heaven's Feel - I. Presage Flower|anime|200200
+11654|Fate/stay night Movie: Heaven's Feel - II. Lost Butterfly|anime|200200
+20838|Fate/stay night Movie: Heaven's Feel - III. Spring Song|anime|200200
+11656|Fate/stay night: Unlimited Blade Works|anime|200200
+16257|Fate/stay night: Unlimited Blade Works 2nd Season|anime|200200
+20203|Fate/stay night: Unlimited Blade Works Prologue|anime|200200
+1864|Fate/strange Fake: Whispers of Dawn|anime|200200
 108519|Final Fantasy XIV|game|200207
 85499|Final Fantasy XIV: Shiritsu Eorzea Gakuen|manga|200207
 64193|Fire Punch|manga|0
@@ -596,7 +596,6 @@ id|name|type|bucket
 16982|Inuyashiki|manga|200349
 53159|Irozuku Sekai no Ashita kara|anime|0
 53797|Isekai Cheat Magician|anime|0
-24615|Isekai Kizoku ni Tensei suru|anime|0
 30940|Isekai Maou to Shoukan Shoujo no Dorei Majutsu|anime|200353
 30951|Isekai Maou to Shoukan Shoujo no Dorei Majutsu Î©|anime|200353
 57514|Isekai Meikyuu de Harem wo|anime|0
@@ -644,8 +643,8 @@ id|name|type|bucket
 81559|Juujika no Rokunin|manga|0
 22768|Juuni Kokuki|anime|0
 54981|Juuni Taisen|anime|0
-15158|K-On! Movie|anime|0
-20727|K-On!!|anime|0
+15158|K-On! Movie|anime|200002
+20727|K-On!!|anime|200002
 53006|K: Missing Kings|anime|0
 53005|K: Return of Kings|anime|0
 84835|Kaette Kudasai! Akutsu-san|manga|0
@@ -653,11 +652,11 @@ id|name|type|bucket
 5369|Kage no Jitsuryokusha ni Naritakute!|manga|200390
 12321|Kage no Jitsuryokusha ni Naritakute! 2nd Season|anime|200390
 17736|Kaguya-hime no Monogatari|anime|0
-455|Kaguya-sama wa Kokurasetai: First Kiss wa Owaranai|anime|0
+455|Kaguya-sama wa Kokurasetai: First Kiss wa Owaranai|anime|200393
 456|Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen|anime|200393
 640|Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen|manga|200393
-454|Kaguya-sama wa Kokurasetai: Ultra Romantic|anime|200394
-43445|Kaguya-sama wa Kokurasetai: Ultra Romantic Teaser PV - Ishigami Yuu wa Kataritai|anime|200394
+454|Kaguya-sama wa Kokurasetai: Ultra Romantic|anime|200393
+43445|Kaguya-sama wa Kokurasetai: Ultra Romantic Teaser PV - Ishigami Yuu wa Kataritai|anime|200393
 21259|Kaiba|anime|0
 13669|Kaichou wa Maid-sama!|anime|200396
 18621|Kaichou wa Maid-sama!|manga|200396
@@ -1229,7 +1228,7 @@ id|name|type|bucket
 4547|Seishun Buta Yarou wa Yumemiru Shoujo no Yume wo Minai|anime|0
 31280|Seitokai Yakuindomo|anime|200751
 31281|Seitokai Yakuindomo*|anime|200751
-24614|Sekai Saikou no Ansatsusha|anime|0
+24614|Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru|anime|0
 33304|Sekirei|anime|200753
 33305|Sekirei: Pure Engagement|anime|200753
 4785|Sen to Chihiro no Kamikakushi|anime|0
