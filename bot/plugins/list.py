@@ -61,7 +61,7 @@ class ListCommand:
             query_string = f"filter: `{self.search}`\n\n"
 
         if len(character_list) >= 1:
-            header = ""
+            header = query_string
             pages = []
 
             count = 0
@@ -74,7 +74,7 @@ class ListCommand:
                     if character is None:
                         break
 
-                    description += f"{query_string}`{'0' * (6 - len(str(character.id)))}{character.id}` **{character.first_name} {character.last_name}** • <:wishfragments:1148459769980530740> {character.value}\n"
+                    description += f"`{'0' * (6 - len(str(character.id)))}{character.id}` **{character.first_name} {character.last_name}** • <:wishfragments:1148459769980530740> {character.value}\n"
 
                 embed = hikari.Embed(
                     title=f"{user.name}'s Characters", color="f598df", description=description)
