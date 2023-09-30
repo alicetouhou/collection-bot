@@ -1,4 +1,4 @@
-import csv
+import pandas
 import asyncio
 import aiohttp
 import os
@@ -18,6 +18,19 @@ dotenv.load_dotenv()
 
 token = os.environ["MAL_ACCESS_TOKEN"]
 HEADERS = {"Authorization": f"Bearer {token}"}
+
+characters_csv = pandas.read_csv("bot/data/characters.csv",
+                                 header=0, delimiter="|", encoding="utf8")
+series_csv = pandas.read_csv("bot/data/series.csv",
+                             header=0, delimiter="|", encoding="utf8")
+series_correspondences_csv = pandas.read_csv("bot/data/series_correspondences.csv",
+                                             header=0, delimiter="|", encoding="utf8")
+
+images_correspondences_csv = pandas.read_csv("bot/data/images_correspondences.csv",
+                                             header=0, delimiter="|", encoding="utf8")
+
+buckets_csv = pandas.read_csv("bot/data/buckets.csv",
+                              header=0, delimiter="|", encoding="utf8")
 
 
 class Series:
@@ -192,67 +205,96 @@ async def get_image_size(session: aiohttp.ClientSession, url) -> tuple | None:
         return None
 
 
-async def write_to_file(session, characters: list[Character]):
-    read_file = open("bot/data/db.csv", "r", encoding="utf8")
-    reader = csv.reader(read_file, delimiter="|")
-    next(reader)
+async def write_to_file(session, characters: list[Character], bucket=None):
+    series_dicts = [
+        {"name": characters[0].anime, "type": "anime"},
+        {"name": characters[0].manga, "type": "manga"},
+        {"name": characters[0].game, "type": "game"},
+    ]
 
-    data = []
-    ids_in_order: list[str] = []
-    for x in reader:
-        data.append([x[0], x[1], x[2], x[5]])
-        ids_in_order.append(x[0])
+    if bucket is not None:
+        if bucket not in buckets_csv["name"].values:
+            bucket_id = max(buckets_csv["id"]) + 1
+            buckets_csv.loc[len(buckets_csv.index)] = [
+                bucket_id, bucket]
+        else:
+            bucket_id = buckets_csv.loc[buckets_csv["name"]
+                                        == bucket, "id"].values[0]
+    else:
+        bucket_id = 0
+
+    for series in series_dicts:
+        if series["name"] == "":
+            continue
+        series_name = series["name"]
+        if series["name"] in series_csv["name"].values:
+            return
+        series_id = max(series_csv["id"]) + 1
+        series_csv.loc[len(series_csv.index)] = [
+            series_id, series["name"], series["type"], bucket_id]
+
+        bucket_candidates = []
+        for value in series_csv["name"].values:
+            if series_name in value or value in series_name:
+                if len(value) > 12:
+                    bucket_candidates.append(value)
+
+        if len(bucket_candidates) > 1 and len(series_name) > 12 and bucket == None:
+            bucket = min(bucket_candidates, key=len)
+            bucket_id = series_csv.loc[series_csv["name"]
+                                       == bucket, "bucket"].values[0]
+            if bucket_id == 0:
+                if bucket not in buckets_csv["name"].values:
+                    bucket_id = max(buckets_csv["id"]) + 1
+                    buckets_csv.loc[len(buckets_csv.index)] = [
+                        bucket_id, bucket]
+                else:
+                    bucket_id = buckets_csv.loc[buckets_csv["name"]
+                                                == bucket, "id"].values[0]
+            for s in bucket_candidates:
+                series_csv.loc[series_csv["name"]
+                               == s, "bucket"] = bucket_id
 
     for char in characters:
-        string_id = str(char.id)
-        if string_id in ids_in_order:
-            character_index = ids_in_order.index(string_id)
-            if char.anime != "":
-                dat: list[str] = data[character_index][3].split(",")
-                dat.append(char.anime)
-                res = [i for n, i in enumerate(dat) if i not in dat[:n]]
-                data[character_index][3] = ",".join(res)
-            if char.manga != "":
-                dat = data[character_index][6].split(",")
-                dat.append(char.manga)
-                res = [i for n, i in enumerate(dat) if i not in dat[:n]]
-                data[character_index][6] = ",".join(res)
-        else:
-            for image in char.images:
-                size = await get_image_size(session, image)
-                if size and (size[0]/size[1] < 0.62 or size[0]/size[1] > 0.67):
-                    char.images.remove(image)
-            if len(char.images) == 0:
-                continue
-            data.append([str(char.id), char.first_name, char.last_name, char.anime,
-                        char.get_images_str(), str(char.get_value()), char.manga, char.game])
+        if char.id in characters_csv["id"].values:
+            series_correspondences_csv.loc[len(
+                series_correspondences_csv.index)] = [char.id, series_id]
+            continue
 
-    write_characters_file = open(
-        "bot/data/db.csv", "w", newline='', encoding="utf8")
-    writer = csv.writer(write_characters_file, delimiter="|")
-    writer.writerow(("id", "first_name", "last_name", "value"))
-    writer.writerows(data)
+        for image in char.images:
+            size = await get_image_size(session, image)
+            if size and (size[0]/size[1] > 0.62 and size[0]/size[1] < 0.67):
+                images_correspondences_csv.loc[len(
+                    images_correspondences_csv.index)] = [char.id, image]
+
+        if char.id in images_correspondences_csv["character_id"].values:
+            characters_csv.loc[len(characters_csv.index)] = [
+                char.id, char.first_name, char.last_name, char.get_value()]
+            series_correspondences_csv.loc[len(
+                series_correspondences_csv.index)] = [char.id, series_id]
 
 
-async def add_series(session, series, index, type="anime"):
+async def add_series(session, series, index, type="anime", bucket=None):
     characters = await get_characters_in_series(
         session, series, type, index)
-    await write_to_file(session, characters)
+    await write_to_file(session, characters, bucket=bucket)
 
 
 async def get_series():
     async with aiohttp.ClientSession() as session:
-        series_ids = await get_top_series_ids(session, 227, 173, type="manga")
-        series_ids = await get_series_from_ids(session, [12191, 603, 21511], type="anime")
+        series_ids = await get_top_series_ids(session, 195, 1005, type="anime")
+        # series_ids = await get_series_from_ids(session, [39681], type="anime")
         for i, series in enumerate(series_ids):
-            while True:
-                try:
-                    await add_series(session, series, index=i, type="anime")
-                except:
-                    print("\nError encountered! Retrying series....")
-                    sleep(15)
-                else:
-                    break
+            await add_series(session, series, index=i+1, type="anime")
+
+    characters_csv.to_csv("bot/data/characters.csv", sep="|", index=False)
+    series_csv.to_csv("bot/data/series.csv", sep="|", index=False)
+    series_correspondences_csv.to_csv(
+        "bot/data/series_correspondences.csv", sep="|", index=False)
+    images_correspondences_csv.to_csv(
+        "bot/data/images_correspondences.csv", sep="|", index=False)
+    buckets_csv.to_csv(
+        "bot/data/buckets.csv", sep="|", index=False)
 
 
 async def main():

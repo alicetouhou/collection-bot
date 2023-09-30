@@ -1,14 +1,14 @@
 id|name|type|bucket
-4636|"""Oshi no Ko"""|anime|200000
-6266|"""Oshi no Ko"""|manga|200000
-55192|100-man no Inochi no Ue ni Ore wa Tatteiru|anime|0
+4636|[Oshi no Ko]|anime|200000
+6266|[Oshi no Ko]|manga|200000
+55192|100-man no Inochi no Ue ni Ore wa Tatteiru|anime|201033
 57922|11eyes|anime|0
 59201|20th Century Boys|manga|201001
 59202|21st Century Boys|manga|201001
 478|3-gatsu no Lion|anime|200005
 549|3-gatsu no Lion|manga|200005
 391|3-gatsu no Lion 2nd Season|anime|200005
-52766|3D Kanojo: Real Girl|anime|0
+52766|3D Kanojo: Real Girl|anime|201022
 8574|5-toubun no Hanayome|manga|200007
 6303|5-toubun no Hanayome ∬|anime|200007
 4092|86|anime|200008
@@ -86,7 +86,7 @@ id|name|type|bucket
 15244|Baka to Test to Shoukanjuu|anime|0
 1810|Bakemono no Ko|anime|0
 4763|Bakemonogatari|anime|200001
-33388|Baki|anime|0
+33388|Baki|anime|201018
 19924|Bakuman.|anime|200060
 20428|Bakuman.|manga|200060
 15045|Bakuman. 2nd Season|anime|200060
@@ -221,25 +221,25 @@ id|name|type|bucket
 8493|Cyberpunk: Edgerunners|anime|0
 2254|D.Gray-man|anime|200133
 3051|D.Gray-man|manga|200133
-32041|Dagashi Kashi|anime|0
+32041|Dagashi Kashi|anime|201029
 33047|Dakara Boku wa|anime|0
 3522|Dandadan|manga|0
 53626|Danganronpa 3: The End of Kibougamine Gakuen - Zetsubou-hen|anime|0
-8536|Danshi Koukousei no Nichijou|anime|0
+8536|Danshi Koukousei no Nichijou|anime|201041
 14883|Darker than Black: Kuro no Keiyakusha|anime|200139
 14965|Darker than Black: Kuro no Keiyakusha Gaiden|anime|200139
 31235|Darker than Black: Ryuusei no Gemini|anime|0
 27719|Darwin's Game|anime|200141
 37529|Darwin's Game|manga|200141
-15963|Date A Live II|anime|0
+15963|Date A Live II|anime|201023
 15964|Date A Live IV|anime|0
 80910|Dead Dead Demons Dededede Destruction|manga|0
 81067|Dead Tube|manga|0
 61304|Deadman Wonderland|manga|0
 22075|Death Billiards|anime|0
 6868|Death March kara Hajimaru Isekai Kyousoukyoku|anime|0
-8280|Death Note|anime|200149
-11349|Death Note|manga|200149
+8280|Death Note|anime|201014
+11349|Death Note|manga|201014
 53482|Death Note: Tokubetsu Yomikiri|manga|200149
 22074|Death Parade|anime|0
 54407|Deca-Dence|anime|0
@@ -314,7 +314,7 @@ id|name|type|bucket
 57548|Edens Zero|anime|0
 15844|Eiga Daisuki Pompo-san|anime|0
 21281|Eizouken ni wa Te wo Dasu na!|anime|0
-13145|Elfen Lied|manga|0
+13145|Elfen Lied|manga|201019
 8803|Enen no Shouboutai|manga|200187
 6463|Enen no Shouboutai: Ni no Shou|anime|200187
 9727|Ergo Proxy|anime|0
@@ -393,7 +393,7 @@ id|name|type|bucket
 22684|Gankutsuou|anime|0
 59488|Gantz|manga|0
 27490|Gate: Jieitai Kanochi nite|anime|0
-79762|Gekkan Shoujo Nozaki-kun|manga|0
+79762|Gekkan Shoujo Nozaki-kun|manga|201039
 57251|Genjitsu Sekai wo mo Musou Suru: Level Up wa Jinsei wo Kaeta|anime|0
 58038|Genjitsu Shugi Yuusha no Oukoku Saikenki Part 2|anime|0
 96906|Genshin Impact|game|0
@@ -463,8 +463,9 @@ id|name|type|bucket
 11933|Grand Blue|manga|200262
 10673|Great Pretender|anime|0
 427|Great Teacher Onizuka|anime|0
-33348|Grisaia no Kajitsu|anime|0
-33349|Grisaia no Rakuen|anime|0
+33348|Grisaia no Kajitsu|anime|200004
+33349|Grisaia no Rakuen|anime|200004
+33350|Gurizaia no Kajitsu|game|200004
 79666|Gunnm|manga|0
 2491|Gyakkyou Burai Kaiji: Hakairoku-hen|anime|0
 18969|Gyakkyou Burai Kaiji: Ultimate Survivor|anime|0
@@ -500,7 +501,7 @@ id|name|type|bucket
 4825|Hanamonogatari|anime|200001
 52891|Hanasaku Iroha|anime|0
 577|Handa-kun|anime|0
-23811|Hanma Baki: Son of Ogre 2nd Season|anime|0
+23811|Hanma Baki: Son of Ogre 2nd Season|anime|201037
 80680|Happiness|manga|0
 54564|Happy Sugar Life|anime|0
 29521|Hataraku Maou-sama!|anime|200288
@@ -519,11 +520,11 @@ id|name|type|bucket
 26712|Hibike! Euphonium|anime|200297
 16352|Hibike! Euphonium 2|anime|200297
 5787|Hidamari Sketch: Sae Hiro Sotsugyou-hen|anime|0
-24324|Higashi no Eden|anime|0
+24324|Higashi no Eden|anime|201026
 22232|Hige wo Soru. Soshite Joshikousei wo Hirou.|anime|200300
 30171|Hige wo Soru. Soshite Joshikousei wo Hirou.|manga|200300
-168|High School DxD Hero|anime|0
-2063|High School DxD OVA|anime|0
+168|High School DxD Hero|anime|200003
+2063|High School DxD OVA|anime|200003
 4454|High Score Girl|anime|200303
 4453|High Score Girl II|anime|200303
 5401|High Score Girl: Extra Stage|anime|200303
@@ -543,8 +544,8 @@ id|name|type|bucket
 82408|Hiyokoi|manga|0
 5631|Hokuto no Ken|anime|200312
 7645|Hokuto no Ken|manga|200312
-1705|Holo no Graffiti|anime|0
-1706|Hololive Alternative|anime|0
+1705|Holo no Graffiti|anime|201004
+1706|Hololive Alternative|anime|201004
 79363|Holyland|manga|0
 68927|Homunculus|manga|0
 5985|Honzuki no Gekokujou: Shisho ni Naru Tame ni wa Shudan wo Erandeiraremasen|anime|200317
@@ -605,7 +606,7 @@ id|name|type|bucket
 25758|Isekai wa Smartphone to Tomo ni.|anime|0
 25301|Ishuzoku Reviewers|anime|0
 53895|Isshuukan Friends.|anime|0
-871|Itai no wa Iya nanode Bougyoryoku ni Kyokufuri Shitai to Omoimasu.|anime|0
+871|Itai no wa Iya nanode Bougyoryoku ni Kyokufuri Shitai to Omoimasu.|anime|201046
 55210|Itazura na Kiss|anime|0
 79573|Jagaaaaaan|manga|0
 57638|Jahy-sama wa Kujikenai!|anime|0
@@ -638,7 +639,7 @@ id|name|type|bucket
 1654|Jujutsu Kaisen 0: Tokyo Toritsu Jujutsu Koutou Senmon Gakkou|manga|200378
 1241|Jujutsu Kaisen 2nd Season|anime|200378
 65554|Jumyou wo Kaitotte Moratta. Ichinen ni Tsuki|manga|0
-56954|Junjou Romantica|anime|0
+56954|Junjou Romantica|anime|201025
 54213|Just Because!|anime|0
 81559|Juujika no Rokunin|manga|0
 22768|Juuni Kokuki|anime|0
@@ -722,12 +723,12 @@ id|name|type|bucket
 20017|Kidou Senshi Gundam Thunderbolt|anime|0
 12771|Kidou Senshi Gundam Unicorn|anime|0
 13285|Kidou Senshi Gundam: Dai 08 MS Shoutai|anime|0
-16942|Kidou Senshi Gundam: Suisei no Majo Season 2|anime|0
+16942|Kidou Senshi Gundam: Suisei no Majo Season 2|anime|201038
 7266|Kidou Senshi Gundam: Tekketsu no Orphans|anime|200442
 7265|Kidou Senshi Gundam: Tekketsu no Orphans 2nd Season|anime|200442
 12770|Kidou Senshi Gundam: The Origin|anime|200443
 12839|Kidou Senshi Gundam: The Origin - Zenya Akai Suisei|anime|200443
-21637|Kill la Kill|anime|0
+21637|Kill la Kill|anime|201016
 80769|Killing Stalking|manga|0
 4492|Kimetsu no Yaiba|anime|200446
 6070|Kimetsu no Yaiba|manga|200446
@@ -753,7 +754,7 @@ id|name|type|bucket
 48039|Kingdom 2nd Season|anime|200456
 4202|Kingdom 3rd Season|anime|200456
 48038|Kingdom 4th Season|anime|200456
-17290|Kino no Tabi: The Beautiful World|anime|0
+17290|Kino no Tabi: The Beautiful World|anime|201015
 56620|Kinsou no Vermeil: Gakeppuchi Majutsushi wa Saikyou no Yakusai to Mahou Sekai wo Tsukisusumu|anime|0
 9213|Kiseijuu|manga|200459
 6880|Kiseijuu: Sei no Kakuritsu|anime|200459
@@ -833,10 +834,10 @@ id|name|type|bucket
 1135|Kuzu no Honkai|anime|200502
 1529|Kuzu no Honkai|manga|200502
 22670|Kyokou Suiri|anime|0
-84019|Kyou|manga|200504
-11339|Kyou kara Ore wa!!|anime|200504
-798|Kyou-hen|anime|200504
-4729|Kyoukai no Kanata Movie 2: I'll Be Here - Mirai-hen|anime|200504
+84019|Kyou|manga|0
+11339|Kyou kara Ore wa!!|anime|0
+798|Kyou-hen|anime|0
+4729|Kyoukai no Kanata Movie 2: I'll Be Here - Mirai-hen|anime|0
 57804|Kyuukyoku Shinka shita Full Dive RPG ga Genjitsu yori mo Kusoge Dattara|anime|0
 55035|Kämpfer|anime|0
 12890|Last Game|manga|0
@@ -881,7 +882,7 @@ id|name|type|bucket
 9865|Magi: Sinbad no Bouken (TV)|anime|200533
 4816|Magi: The Kingdom of Magic|anime|200533
 4639|Magi: The Labyrinth of Magic|anime|200533
-76141|Mahou Sensei Negima!|manga|0
+76141|Mahou Sensei Negima!|manga|201012
 57083|Mahou Sensou|anime|0
 9833|Mahou Shoujo Lyrical Nanoha A's|anime|0
 9832|Mahou Shoujo Lyrical Nanoha: The Movie 2nd A's|anime|0
@@ -890,7 +891,7 @@ id|name|type|bucket
 13660|Mahou Shoujo Madoka★Magica Movie 2: Eien no Monogatari|anime|200538
 12382|Mahou Shoujo Madoka★Magica Movie 3: Hangyaku no Monogatari|anime|200538
 58004|Mahou Shoujo Site|anime|0
-22240|Mahouka Koukou no Rettousei|anime|0
+22240|Mahouka Koukou no Rettousei|anime|201021
 11554|Mahoutsukai no Yome|anime|200541
 15822|Mahoutsukai no Yome|manga|200541
 24387|Mahoutsukai no Yome: Hoshi Matsu Hito|anime|200541
@@ -916,7 +917,7 @@ id|name|type|bucket
 1017|Maoujou de Oyasumi|anime|200559
 1374|Maoujou de Oyasumi|manga|200559
 15248|Maoyuu Maou Yuusha|anime|0
-13148|Masamune-kun no Revenge|manga|0
+13148|Masamune-kun no Revenge|manga|201030
 79213|Mashle|manga|0
 54953|Masou Gakuen HxH|anime|0
 82018|Mato Seihei no Slave|manga|0
@@ -1059,7 +1060,7 @@ id|name|type|bucket
 452|Odd Taxi|anime|0
 69065|Okarishimasu|manga|200630
 51413|Okarishimasu 2nd Season|anime|200630
-54666|Okusama ga Seitokaichou!|anime|0
+54666|Okusama ga Seitokaichou!|anime|201027
 15368|Omae Umasou da na|anime|0
 57656|Omamori Himari|anime|0
 21295|Omniscient Reader|manga|0
@@ -1100,7 +1101,7 @@ id|name|type|bucket
 56482|Osananajimi ga Zettai ni Makenai Love Comedy|anime|0
 1264|Osomatsu-san|anime|0
 55432|Otome Game Sekai wa Mob ni Kibishii Sekai desu|anime|0
-32418|Otome Game no Hametsu Flag shika Nai Akuyaku Reijou ni Tensei shiteshimatta...|anime|0
+32418|Otome Game no Hametsu Flag shika Nai Akuyaku Reijou ni Tensei shiteshimatta...|anime|201045
 56035|Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken|anime|0
 80790|Otoyomegatari|manga|0
 2742|Ouran Koukou Host Club|anime|200661
@@ -1139,7 +1140,7 @@ id|name|type|bucket
 17518|Pokemon Movie 01: Mewtwo no Gyakushuu|anime|200685
 55262|Princess Connect! Re:Dive|anime|0
 22420|Princess Tutu|anime|0
-68608|Prison School|manga|0
+68608|Prison School|manga|201034
 51689|Project SEKAI COLORFUL STAGE! feat. Hatsune Miku|game|201000
 55627|Promare|anime|0
 2051|Psycho-Pass|anime|200691
@@ -1221,7 +1222,7 @@ id|name|type|bucket
 1748|School Rumble|anime|200744
 1747|School Rumble Ni Gakki|anime|200744
 54086|Seiken Tsukai no World Break|anime|0
-53200|Seikon no Qwaser|anime|0
+53200|Seikon no Qwaser|anime|201040
 23109|Seirei no Moribito|anime|0
 57874|Seiren|anime|0
 4548|Seishun Buta Yarou wa Bunny Girl Senpai no Yume wo Minai|anime|0
@@ -1317,7 +1318,7 @@ id|name|type|bucket
 21121|Sora no Otoshimono Forte|anime|200803
 10992|Sora yori mo Tooi Basho|anime|0
 53919|Soredemo Sekai wa Utsukushii|anime|0
-8866|Soul Eater|manga|0
+8866|Soul Eater|manga|201013
 23667|Sousei no Onmyouji|anime|200807
 32102|Sousei no Onmyouji|manga|200807
 79060|Sousou no Frieren|manga|0
@@ -1335,7 +1336,7 @@ id|name|type|bucket
 3898|Steins;Gate: Kyoukaimenjou no Missing Link - Divide By Zero|anime|200814
 236|Steins;Gate: Oukoubakko no Poriomania|anime|200814
 6768|Stranger: Mukou Hadan|anime|0
-9964|Strike the Blood|anime|0
+9964|Strike the Blood|anime|201017
 62113|Strobe Edge|manga|0
 1438|Succubus Stayed Life|manga|0
 52662|Suisei no Gargantia|anime|0
@@ -1367,7 +1368,7 @@ id|name|type|bucket
 21244|Taiyou no Ie|manga|0
 29222|Takarajima|anime|0
 31187|Takt Op. Destiny|anime|0
-53336|Tales of Zestiria the Cross|anime|0
+53336|Tales of Zestiria the Cross|anime|201031
 24245|Tamako Market|anime|0
 23275|Tamayura: Sotsugyou Shashin Part 4 - Ashita|anime|0
 30381|Tanaka-kun wa Itsumo Kedaruge|anime|0
@@ -1390,7 +1391,7 @@ id|name|type|bucket
 53819|Tenkuu Shinpan|anime|200852
 72752|Tenkuu Shinpan|manga|200852
 6936|Tenkuu no Shiro Laputa|anime|0
-12889|Tennis no Oujisama: Zenkoku Taikai-hen - Final|anime|0
+12889|Tennis no Oujisama: Zenkoku Taikai-hen - Final|anime|201024
 56255|Tensai Ouji no Akaji Kokka Saisei Jutsu|anime|0
 57452|Tensei shitara Ken deshita|anime|0
 51615|Tensei shitara Slime Datta Ken|anime|200857
@@ -1419,7 +1420,7 @@ id|name|type|bucket
 26055|Toaru Majutsu no Index II|anime|200869
 2032|Toaru Majutsu no Index III|anime|200869
 19751|Toki wo Kakeru Shoujo|anime|0
-84478|Tokidoki|manga|0
+84478|Tokidoki|manga|201020
 29344|Tokyo Ghoul|anime|200872
 50049|Tokyo Ghoul|manga|200872
 37004|Tokyo Ghoul √A|anime|200872
@@ -1476,8 +1477,8 @@ id|name|type|bucket
 31861|Tsurezure Children|manga|200917
 23986|Tsurune: Tsunagari no Issha|anime|0
 55360|Tsuujou Kougeki ga Zentai Kougeki de Ni-kai Kougeki no Okaasan wa Suki desu ka?|anime|0
-76143|UQ Holder!|manga|0
-24916|Uchouten Kazoku 2|anime|0
+76143|UQ Holder!|manga|201012
+24916|Uchouten Kazoku 2|anime|201028
 11855|Uchuu Kyoudai|anime|0
 12499|Uchuu Senkan Yamato 2199|anime|0
 12198|Uma Musume: Pretty Derby Season 2|anime|0
@@ -1520,7 +1521,7 @@ id|name|type|bucket
 52716|Witch Craft Works|anime|0
 17241|Wolf's Rain|anime|200949
 17240|Wolf's Rain OVA|anime|200949
-30565|Wonder Egg Priority|anime|0
+30565|Wonder Egg Priority|anime|201036
 22519|Working!!!|anime|200951
 22517|Working!!! Lord of the Takanashi|anime|200951
 22518|Working'!!|anime|0
@@ -1533,7 +1534,7 @@ id|name|type|bucket
 51235|Wotaku ni Koi wa Muzukashii OVA|anime|200954
 5479|Wu Liuqi: Xuanwu Guo Pian|anime|0
 5480|Wu Liuqi: Zui Qiang Fa Xing Shi|anime|0
-54041|Xian Wang de Richang Shenghuo|anime|0
+54041|Xian Wang de Richang Shenghuo|anime|201042
 9534|Yagate Kimi ni Naru|anime|200958
 13063|Yagate Kimi ni Naru|manga|200958
 10944|Yahari Ore no Seishun Love Comedy wa Machigatteiru.|anime|200959
@@ -1564,14 +1565,14 @@ id|name|type|bucket
 6962|Youjo Senki Movie|anime|200975
 31026|Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e|manga|200976
 22874|Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e 2nd Season|anime|200976
-13928|Yowamushi Pedal: Grande Road|anime|0
+13928|Yowamushi Pedal: Grande Road|anime|201044
 54505|Yuragi-sou no Yuuna-san|anime|200978
 73768|Yuragi-sou no Yuuna-san|manga|200978
 27506|Yuri!!! on Ice: Yuri Plisetsky GPF in Barcelona EX - Welcome to The Madness|anime|0
 19248|Yuru Camp△|anime|200980
 4624|Yuru Camp△ Movie|anime|200980
 4623|Yuru Camp△ Season 2|anime|200980
-26863|Yuuki Yuuna wa Yuusha de Aru: Washio Sumi no Shou 3 - Yakusoku|anime|0
+26863|Yuuki Yuuna wa Yuusha de Aru: Washio Sumi no Shou 3 - Yakusoku|anime|201035
 2608|Yuukoku no Moriarty|anime|200982
 19169|Yuukoku no Moriarty Part 2|anime|200982
 55378|Yuusha|anime|200983
@@ -1598,5 +1599,160 @@ id|name|type|bucket
 20571|xxxHOLiC|manga|200999
 19961|xxxHOLiC Rou|anime|200999
 18367|xxxHOLiC Shunmuki|anime|200999
-18234|xxxHOLiCâ—†Kei|anime|200999
+18234|xxxHOLiC◆Kei|anime|200999
 82582|Übel Blatt|manga|0
+108520|Shi Cao Lao Long Bei Guan Yi E Long Zhi Ming|anime|0
+108521|Hitoribocchi no Marumaru Seikatsu|anime|0
+108522|Jashin-chan Dropkick|anime|201005
+108523|Jashin-chan Dropkick'|anime|201005
+108524|Jashin-chan Dropkick X|anime|201005
+108525|D4DJ First Mix|anime|201043
+108526|Toaru Kagaku no Accelerator|anime|0
+108527|Isekai Quartet 2|anime|0
+108528|Binbougami ga!|anime|0
+108529|Yowamushi Pedal|anime|201044
+108530|Tonari no Seki-kun|anime|0
+108531|Pokemon: The Origin|anime|0
+108532|Sidonia no Kishi|anime|0
+108533|Shinigami Bocchan to Kuro Maid|anime|0
+108534|Big Order (TV)|anime|0
+108535|Hachi-nan tte, Sore wa Nai deshou!|anime|0
+108536|Ghost Hunt|anime|0
+108537|Grisaia no Meikyuu: Caprice no Mayu 0|anime|0
+108538|Burn the Witch|anime|0
+108539|Zutto Mae kara Suki deshita. Kokuhaku Jikkou Iinkai|anime|0
+108540|Canaan|anime|0
+108541|Dance in the Vampire Bund|anime|0
+108542|Tsubasa Chronicle|anime|0
+108543|Kareshi Kanojo no Jijou|anime|0
+108544|Kujira no Kora wa Sajou ni Utau|anime|0
+108545|Boogiepop wa Warawanai (2019)|anime|0
+108546|Kaguya-sama wa Kokurasetai? Tensai-tachi no Renai Zunousen OVA|anime|0
+108547|Chuunibyou demo Koi ga Shitai! Kirameki no... Slapstick Noel|anime|0
+108548|Princess Lover!|anime|0
+108549|Tiger & Bunny|anime|0
+108550|Otome Game no Hametsu Flag shika Nai Akuyaku Reijou ni Tensei shiteshimatta... X|anime|201045
+108551|Chrno Crusade|anime|0
+108552|Hayate no Gotoku!|anime|0
+108553|Ushio to Tora (TV)|anime|0
+108554|Fate/stay night Movie: Unlimited Blade Works|anime|0
+108555|Berserk: Ougon Jidai-hen I - Haou no Tamago|anime|0
+108556|Itsudatte Bokura no Koi wa 10 cm Datta.|anime|0
+108557|Spy x Family Season 2|anime|0
+108558|Tensei shitara Slime Datta Ken OVA|anime|200857
+108559|Tonikaku Kawaii 2nd Season|anime|200885
+108560|5-toubun no Hanayome Movie|anime|200007
+108561|Poputepipikku|anime|0
+108562|Goblin Slayer II|anime|200253
+108563|Seikoku no Dragonar|anime|0
+108564|Digimon Adventure 02|anime|200163
+108565|Kamisama no Inai Nichiyoubi|anime|0
+108566|Hataraku Saibou Black|anime|200289
+108567|Servant x Service|anime|0
+108568|Koi wa Sekai Seifuku no Ato de|anime|0
+108569|Uramichi Oniisan|anime|0
+108570|Aoi Bungaku Series|anime|0
+108571|Aoharu x Kikanjuu|anime|0
+108572|Umineko no Naku Koro ni|anime|0
+108573|Engage Kiss|anime|0
+108574|Fate/Extra: Last Encore|anime|0
+108575|Ladies versus Butlers!|anime|0
+108576|Cider no You ni Kotoba ga Wakiagaru|anime|0
+108577|Shugo Chara!|anime|0
+108578|Sekaiichi Hatsukoi|anime|0
+108579|Dragon Ball Z Movie 14: Kami to Kami|anime|200176
+108580|Mayoiga|anime|0
+108581|Saiki Kusuo no Ψ-nan: Ψ-shidou-hen|anime|200727
+108582|True Tears|anime|0
+108583|Kumo no Mukou, Yakusoku no Basho|anime|0
+108584|Kimi to, Nami ni Noretara|anime|0
+108585|Karneval (TV)|anime|0
+108586|Fate/Grand Order: First Order|anime|0
+108587|Sakurako-san no Ashimoto ni wa Shitai ga Umatteiru|anime|0
+108588|Fairy Tail Movie 1: Houou no Miko|anime|0
+108589|Yu☆Gi☆Oh! Duel Monsters GX|anime|0
+108590|Kara no Kyoukai Movie 4: Garan no Dou|anime|0
+108591|"Tokyo Ghoul: ""Pinto"""|anime|0
+108592|Final Fantasy VII: Advent Children|anime|0
+108593|Osake wa Fuufu ni Natte kara|anime|0
+108594|Itai no wa Iya nanode Bougyoryoku ni Kyokufuri Shitai to Omoimasu. 2|anime|201046
+108595|Kobayashi-san Chi no Maid Dragon: Valentine, Soshite Onsen! - Amari Kitai Shinaide Kudasai|anime|200468
+108596|Hoshi wo Ou Kodomo|anime|0
+108597|07-Ghost|anime|0
+108598|Koukaku no Regios|anime|0
+108599|Meikyuu Black Company|anime|0
+108600|Bleach Movie 4: Jigoku-hen|anime|0
+108601|Monster Musume no Oishasan|anime|0
+108602|Uchi no Ko no Tame naraba, Ore wa Moshikashitara Maou mo Taoseru kamo Shirenai.|anime|0
+108603|Joker Game|anime|0
+108604|Kono Naka ni Hitori, Imouto ga Iru!|anime|0
+108605|Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka Movie: Orion no Ya|anime|200179
+108606|Rail Wars!|anime|0
+108607|Inazuma Eleven|anime|0
+108608|One Piece Film: Gold|anime|0
+108609|Uchiage Hanabi, Shita kara Miru ka? Yoko kara Miru ka?|anime|0
+108610|Berserk: Ougon Jidai-hen II - Doldrey Kouryaku|anime|0
+108611|Radiant|anime|0
+108612|Princess Principal|anime|0
+108613|Rewrite|anime|0
+108614|Naruto Movie 3: Dai Koufun! Mikazuki Jima no Animaru Panic Dattebayo!|anime|0
+108615|Kuro no Shoukanshi|anime|0
+108616|UQ Holder! Mahou Sensei Negima! 2|anime|201012
+108617|High School DxD Specials|anime|0
+108618|Soul Eater NOT!|anime|0
+108619|Asu no Yoichi!|anime|0
+108620|Arcana Famiglia|anime|0
+108621|Uzaki-chan wa Asobitai! Double|anime|200928
+108622|Yi Ren Zhi Xia|anime|0
+108623|Kono Subarashii Sekai ni Shukufuku wo! 3|anime|200485
+108624|Kumichou Musume to Sewagakari|anime|0
+108625|Naruto: Shippuuden Movie 3 - Hi no Ishi wo Tsugu Mono|anime|200601
+108626|Hitsugi no Chaika: Avenging Battle|anime|0
+108627|Gakkou no Kaidan|anime|0
+108628|Rozen Maiden|anime|0
+108629|Death Note: Rewrite|anime|0
+108630|Kami-tachi ni Hirowareta Otoko|anime|0
+108631|Kino no Tabi: The Beautiful World - The Animated Series|anime|201015
+108632|Date A Live Movie: Mayuri Judgment|anime|0
+108633|Cross Ange: Tenshi to Ryuu no Rondo|anime|0
+108634|Love Lab|anime|0
+108635|Date A Live: Date to Date|anime|0
+108636|Asobi ni Iku yo!|anime|0
+108637|Peter Grill to Kenja no Jikan|anime|0
+108638|Kill la Kill Specials|anime|0
+108639|Watashi ni Tenshi ga Maiorita!|anime|0
+108640|Isekai no Seikishi Monogatari|anime|0
+108641|Bokusatsu Tenshi Dokuro-chan|anime|0
+108642|Michiko to Hatchin|anime|0
+108643|Uta no☆Prince-sama♪ Maji Love 1000%|anime|0
+108644|Plastic Neesan|anime|0
+108645|Hoshiai no Sora|anime|0
+108646|Bubble|anime|0
+108647|Danna ga Nani wo Itteiru ka Wakaranai Ken 2 Sure-me|anime|0
+108648|Coquelicot-zaka kara|anime|0
+108649|Boku no Hero Academia: Training of the Dead|anime|200093
+108650|Tsugumomo|anime|0
+108651|Murenase! Seton Gakuen|anime|0
+108652|Digimon Tamers|anime|0
+108653|Colorful (Movie)|anime|0
+108654|Carnival Phantasm|anime|0
+108655|Hataage! Kemono Michi|anime|0
+108656|Hunter x Hunter Movie 1: Phantom Rouge|anime|200324
+108657|Ahiru no Sora|anime|0
+108658|Granblue Fantasy The Animation|anime|0
+108659|Kanojo ga Flag wo Oraretara|anime|0
+108660|Strike the Blood II|anime|201017
+108661|Occultic;Nine|anime|0
+108662|Seitokai no Ichizon|anime|0
+108663|Higurashi no Naku Koro ni Rei|anime|0
+108664|Papa no Iukoto wo Kikinasai!|anime|0
+108665|Shinka no Mi: Shiranai Uchi ni Kachigumi Jinsei|anime|0
+108666|Baki: Dai Raitaisai-hen|anime|0
+108667|Elfen Lied: Tooriame nite Arui wa, Shoujo wa Ikani Shite Sono Shinjou ni Itatta ka? - Regenschauer|anime|0
+108668|Isekai Yakkyoku|anime|0
+108669|Ryuuou no Oshigoto!|anime|0
+108670|No Guns Life|anime|0
+108671|Doukyonin wa Hiza, Tokidoki, Atama no Ue.|anime|0
+108672|Qualidea Code|anime|0
+108673|Deatte 5-byou de Battle|anime|0
+108674|Kara no Kyoukai Movie 6: Boukyaku Rokuon|anime|0

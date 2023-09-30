@@ -4,6 +4,8 @@ import requests
 import dotenv
 import os
 
+# mypy: ignore-errors
+
 dotenv.load_dotenv()
 
 # 1. Generate a new Code Verifier / Code Challenge.
