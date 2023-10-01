@@ -47,7 +47,11 @@ class ListCommand:
             return
 
         if first_character:
-            first_image = first_character.images[0]
+            default_image = await first_character.get_default_image()
+            if default_image:
+                first_image = first_character.images[default_image]
+            else:
+                first_image = first_character.images[0]
 
         character_list.insert(0, first_character)
         query_string = ""
@@ -58,10 +62,11 @@ class ListCommand:
             new_list = filter(
                 lambda char: char in char_filter, character_list)
             character_list = list(new_list)
-            query_string = f"filter: `{self.search}`\n\n"
+            query_string = f"filter: `{self.search}`\n"
 
         if len(character_list) >= 1:
-            header = query_string
+            header = f"List size: **{len(character_list)}**\n" + \
+                query_string + "\n"
             pages = []
 
             count = 0

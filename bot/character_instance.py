@@ -30,26 +30,52 @@ class CharacterInstance(Character):
             return []
 
         records = await self.model.dbpool.fetch(
-            f"SELECT player_id FROM wishlists WHERE guild_id = $1 AND character_id = $2",
+            "SELECT player_id FROM wishlists WHERE guild_id = $1 AND character_id = $2",
             str(self.guild_id),
             self.id
         )
         return [x["player_id"] for x in records]
 
-    async def get_claimed_id(self) -> int:
-        """Return the player ID if the character is claimed. If else, return 0."""
+    async def get_default_image(self) -> int | None:
+        """Return the zero-indexed default image index if the character is claimed. If else, return `None`."""
         if self.model.dbpool is None:
-            return 0
+            return None
 
         records = await self.model.dbpool.fetch(
-            f"SELECT player_id FROM claimed_characters WHERE guild_id = $1 AND character_id = $2",
+            "SELECT default_image FROM claimed_characters WHERE guild_id = $1 AND character_id = $2",
+            str(self.guild_id),
+            self.id
+        )
+
+        if records:
+            return records[0]["default_image"]
+        return None
+
+    async def set_default_image(self, value: int) -> None:
+        if value > len(self.images) or value < 1:
+            return
+        async with self.model.dbpool.acquire() as conn:
+            await conn.execute(
+                f"UPDATE claimed_characters SET default_image = $1 WHERE guild_id = $2 AND character_id = $3",
+                value-1,
+                str(self.guild_id),
+                self.id
+            )
+
+    async def get_claimed_id(self) -> int | None:
+        """Return the player ID if the character is claimed. If else, return `None`."""
+        if self.model.dbpool is None:
+            return None
+
+        records = await self.model.dbpool.fetch(
+            "SELECT player_id FROM claimed_characters WHERE guild_id = $1 AND character_id = $2",
             str(self.guild_id),
             self.id
         )
 
         if records:
             return records[0]["player_id"]
-        return 0
+        return None
 
     def get_series_icon(self, series: asyncpg.Record):
         if series["type"] == "bucket":
@@ -80,12 +106,13 @@ class CharacterInstance(Character):
         embed.set_image(image)
 
         claimed_person_id = await self.get_claimed_id()
-        if claimed_person_id == 0:
+        if claimed_person_id is None:
             return embed
         claimed_person = self.model.bot.cache.get_member(
             self.guild_id, claimed_person_id)
         if not claimed_person:
             claimed_person = await self.model.bot.rest.fetch_member(self.guild_id, claimed_person_id)
+
         if claimed_person:
             embed.set_footer(
                 f"Claimed by {claimed_person.username}", icon=claimed_person.avatar_url)
@@ -101,7 +128,13 @@ class CharacterInstance(Character):
             pages.append(new_embed)
 
         buttons = [nav.PrevButton(), nav.IndicatorButton(), nav.NextButton()]
+
+        default_image_index = await self.get_default_image()
+        if default_image_index is not None:
+            pages.insert(0, pages.pop(default_image_index))
+
         navigator = nav.NavigatorView(pages=pages, buttons=buttons)
+
         return navigator
 
     async def get_claimable_embed(self) -> hikari.Embed:

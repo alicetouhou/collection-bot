@@ -4,7 +4,7 @@ import typing as t
 import crescent
 import hikari
 
-from bot.character import Character
+from bot.character_instance import CharacterInstance
 from bot.user import User
 
 if t.TYPE_CHECKING:
@@ -28,7 +28,7 @@ class Utils:
     def __init__(self, model) -> None:
         self.model: Model = model
 
-    async def validate_id_in_list(self, ctx: crescent.Context, user: User, char_id: int) -> Character | None:
+    async def validate_id_in_list(self, ctx: crescent.Context, user: User, char_id: int) -> CharacterInstance | None:
         if not ctx.guild_id:
             return None
 
@@ -48,7 +48,7 @@ class Utils:
 
         return selected_character
 
-    async def validate_search_in_list(self, ctx: crescent.Context, user: User, char_search: str) -> Character | None:
+    async def validate_search_in_list(self, ctx: crescent.Context, user: User, char_search: str) -> CharacterInstance | None:
         if not ctx.guild_id:
             return None
 

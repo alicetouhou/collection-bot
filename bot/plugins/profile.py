@@ -23,7 +23,12 @@ async def open_image_from_char_id(ctx: crescent.Context, character_id: int) -> i
         if character is None:
             return None
 
-        image_url = character.images[0]
+        default_image = await character.get_default_image()
+
+        if default_image is None:
+            return None
+
+        image_url = character.images[default_image]
         async with aiohttp.ClientSession() as session:
             async with session.get(url=image_url) as response:
                 resp = await response.read()
@@ -63,12 +68,18 @@ class InfoCommand:
         description = f'\n<:wishfragments:1148459769980530740> Wish Fragments: **{currency}**\n\n🥅 Claims available: **{claims}**\n🎲 Rolls available: **{rolls}**'
         if character_list:
 
-            character = await dbsearch.create_character_from_id(ctx.guild_id, character_list[0])
+            first_character = await dbsearch.create_character_from_id(ctx.guild_id, character_list[0])
 
-            if character is None:
+            if first_character is None:
                 return
 
-            description = f'💛 Top character: **{character.first_name} {character.last_name}**\n📚 List size: **{len(character_list)}**' + \
+            default_image = await first_character.get_default_image()
+            if default_image:
+                first_image = first_character.images[default_image]
+            else:
+                first_image = first_character.images[0]
+
+            description = f'💛 Top character: **{first_character.first_name} {first_character.last_name}**\n📚 List size: **{len(character_list)}**' + \
                 description
         embed = hikari.embeds.Embed(
             title=f"{user.name}'s Stats", color="f598df", description=description)
@@ -87,12 +98,13 @@ class InfoCommand:
                 resized_image.putalpha(MASK_IMAGE)
                 combined_image.paste(resized_image, (150 * index, 0))
 
-            if character is None:
+            if first_character is None:
                 return
 
             img_byte_arr = io.BytesIO()
             combined_image.save(img_byte_arr, format='PNG')
-            embed.set_thumbnail(character.images[0])
+
+            embed.set_thumbnail(first_image)
             embed.set_image(img_byte_arr.getvalue())
 
             embed.add_field(name="⬆️ Upgrade Levels",
