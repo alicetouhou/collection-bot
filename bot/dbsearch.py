@@ -47,15 +47,21 @@ class DBSearch:
         except IndexError:
             return None
 
-    async def create_characters_from_ids(self, guild_id: hikari.Snowflake, ids: list[int]) -> list[CharacterInstance]:
+    async def create_characters_from_ids(self, guild_id: hikari.Snowflake, ids: list[int], order_by=None) -> list[CharacterInstance]:
         """Returns `list[Character]` for the IDs inputted. Only the name, id, and value are available."""
+
+        sql = f"""SELECT * FROM characters
+            JOIN claimed_characters ON claimed_characters.character_id = characters.id
+            WHERE id IN ({','.join([f"'{x}'" for x in ids])})
+            """
+
+        if order_by == "value":
+            sql += "ORDER BY characters.value DESC"
+        else:
+            sql += "ORDER BY claimed_characters.list_order"
+
         try:
-            records = await self.model.dbpool.fetch(
-                f"""SELECT * FROM characters
-                JOIN claimed_characters ON claimed_characters.character_id = characters.id
-                WHERE id IN ({','.join([f"'{x}'" for x in ids])})
-                ORDER BY claimed_characters.list_order
-                """)
+            records = await self.model.dbpool.fetch(sql)
 
             output = []
             for record in records:
@@ -96,7 +102,7 @@ class DBSearch:
         return combined_record
 
     async def create_character_from_search(
-        self, guild_id: hikari.Snowflake, search: str, limit=100, filter_str=None
+        self, guild_id: hikari.Snowflake, search: str, limit=100, filter_str=None, order_by=None
     ) -> list[CharacterInstance]:
         search_split = search.split(" ")
 
@@ -119,10 +125,8 @@ class DBSearch:
             sql += f"""AND (
                 first_name ILIKE ${index+1}
                 OR last_name ILIKE ${index+1} 
-                OR characters.id IN (
-                    SELECT character_id FROM character_series WHERE series_id IN 
-                        (SELECT series.id FROM series WHERE name ILIKE ${index+1})
-                    )
+                OR series.name ILIKE ${index+1}
+                OR buckets.name ILIKE ${index+1}
                 )
                 """
 
@@ -131,7 +135,10 @@ class DBSearch:
         if filter_str:
             sql += f""" AND characters.id IN ({','.join([f"'{x}'" for x in filter_str])})"""
 
-        sql += "ORDER BY first_name ILIKE $1 OR NULL, last_name ILIKE $1 OR NULL"
+        if order_by == "value":
+            sql += "ORDER BY value"
+        else:
+            sql += "ORDER BY first_name ILIKE $1 OR NULL, last_name ILIKE $1 OR NULL"
 
         if limit:
             sql += f" LIMIT {str(limit)}"

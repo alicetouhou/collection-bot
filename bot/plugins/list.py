@@ -32,6 +32,12 @@ class ListCommand:
         autocomplete=character_search_autocomplete,
         default=None
     )
+    order = crescent.option(
+        str,
+        "[default]: list order, [value]: ordered by fragment amount",
+        name="order",
+        default=None
+    )
 
     async def callback(self, ctx: crescent.Context) -> None:
         assert ctx.guild_id is not None
@@ -39,7 +45,7 @@ class ListCommand:
         user = await dbsearch.create_user(ctx.guild_id, ctx.user if self.member is None else self.member)
 
         characters = await user.characters
-        character_list = await dbsearch.create_characters_from_ids(ctx.guild_id, characters[1:])
+        character_list = await dbsearch.create_characters_from_ids(ctx.guild_id, characters, order_by=self.order)
 
         first_character = await dbsearch.create_character_from_id(ctx.guild_id, characters[0])
 
@@ -53,7 +59,6 @@ class ListCommand:
             else:
                 first_image = first_character.images[0]
 
-        character_list.insert(0, first_character)
         query_string = ""
 
         if self.search:

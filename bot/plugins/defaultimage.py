@@ -14,7 +14,7 @@ async def character_search_autocomplete(
 
 @plugin.include
 @crescent.command(name="defaultimage", description="Set the default image for a character in your list.")
-class DissolveCommand:
+class DefaultImageCommand:
     search = crescent.option(
         str,
         "Search for a character by name, or ID. The given and family names can be in any order.",

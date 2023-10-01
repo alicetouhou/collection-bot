@@ -62,6 +62,30 @@ class CharacterInstance(Character):
                 self.id
             )
 
+    async def get_embed_color(self) -> str:
+        """Return the embed color for a character."""
+        if self.model.dbpool is None:
+            return "f598df"
+
+        records = await self.model.dbpool.fetch(
+            "SELECT embed_color FROM claimed_characters WHERE guild_id = $1 AND character_id = $2",
+            str(self.guild_id),
+            self.id
+        )
+
+        if records:
+            return records[0]["embed_color"]
+        return "f598df"
+
+    async def set_embed_color(self, color: str) -> None:
+        async with self.model.dbpool.acquire() as conn:
+            await conn.execute(
+                f"UPDATE claimed_characters SET embed_color = $1 WHERE guild_id = $2 AND character_id = $3",
+                color,
+                str(self.guild_id),
+                self.id
+            )
+
     async def get_claimed_id(self) -> int | None:
         """Return the player ID if the character is claimed. If else, return `None`."""
         if self.model.dbpool is None:
@@ -99,10 +123,11 @@ class CharacterInstance(Character):
         return ",".join([f'{self.get_series_icon(x)} {x["name"]}' for x in self.series])
 
     async def _get_embed(self, image) -> hikari.Embed:
-        name = f"{self.first_name} {self.last_name} • {self.value}<:wishfragments:1148459769980530740>"
+        name = f"{self.first_name} {self.last_name} <:wishfragments:1148459769980530740>{self.value}"
+        description = self.get_series_list()
 
-        embed = hikari.Embed(title=name, color="f598df",
-                             description=self.get_series_list())
+        embed = hikari.Embed(title=name, color=await self.get_embed_color(),
+                             description=description)
         embed.set_image(image)
 
         claimed_person_id = await self.get_claimed_id()
