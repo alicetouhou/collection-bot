@@ -85,18 +85,20 @@ class InfoCommand:
             title=f"{user.name}'s Stats", color="f598df", description=description)
         if character_list:
             character_images = await asyncio.gather(
-                *map(lambda x: open_image_from_char_id(ctx, x), character_list[:5]
+                *map(lambda x: open_image_from_char_id(ctx, x), character_list[:10]
                      ))
 
             filtered_chararacter_images = filter(
                 lambda item: item is not None, character_images)
             pil_images = [Image.open(im) for im in filtered_chararacter_images]
 
-            combined_image = Image.new('RGBA', (5*150-38, 175), (0, 0, 0, 0))
+            combined_image = Image.new('RGBA', (5*150-38, 388), (0, 0, 0, 0))
             for index, image in enumerate(pil_images):
                 resized_image = image.resize((112, 175))
                 resized_image.putalpha(MASK_IMAGE)
-                combined_image.paste(resized_image, (150 * index, 0))
+                combined_image.paste(
+                    resized_image, ((150 * index) % 750, int(index/5) * 213)
+                )
 
             if first_character is None:
                 return
