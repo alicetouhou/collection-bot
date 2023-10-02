@@ -1,5 +1,6 @@
 import csv
 import typing as t
+import asyncpg
 
 import crescent
 import hikari
@@ -288,3 +289,9 @@ class Utils:
             type
         )
         return records[0]
+
+    async def run_sql(self, sql: str) -> list[asyncpg.Record]:
+        records = await self.model.dbpool.fetch(
+            sql
+        )
+        return records

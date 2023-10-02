@@ -71,60 +71,25 @@ async def save_correspondences(ctx: crescent.Context):
     writer.writerows([[x[0], x[1]] for x in series_correspondences])
     await ctx.respond("`Complete!`")
 
-# @plugin.include
-# @admin_group.child
-# @crescent.command(
-#     name="savebuckets",
-#     description="Add series buckets automatically. Mistakes will probably be made.",
-#     guild=int(os.environ["GUILD"]),
-# )
-# async def save_buckets(ctx: crescent.Context):
-#     await ctx.respond("`Running command to save buckets....`")
-#     file = open("bot\data\series.csv",
-#                 "r+", newline="", encoding="utf8")
 
-#     reader = csv.reader(file, delimiter="|")
-#     next(reader)
-#     series_list = []
-#     buckets: dict[int, dict[str, str | list[int]]] = {}
-#     for x in reader:
-#         try:
-#             series_list.append([x[0], x[1], x[2]])
+@plugin.include
+@admin_group.child
+@crescent.command(
+    name="runsql",
+    description="Run any SQL.",
+    guild=int(os.environ["GUILD"]),
+)
+class runsql:
+    sql = crescent.option(
+        str,
+        "Enter SQL to run",
+        name="sql",
+    )
 
-#         except IndexError:
-#             print(f"Error adding: {x}")
-
-#     current_name = ""
-#     current_id = 200000
-#     for row in series_list:
-#         if current_name == "" or current_name not in row[1]:
-#             current_name = row[1]
-#             buckets[current_id] = {
-#                 "name": row[1],
-#                 "series": []
-#             }
-#             current_id += 1
-#         buckets[current_id-1]["series"].append(int(row[0]))
-
-#     new_file = open("bot\data\\bucket_correspondences.csv",
-#                     "w", newline="", encoding="utf8")
-
-#     buckets_list = []
-#     buckets_name = []
-#     for key in buckets:
-#         if len(buckets[key]["series"]) == 1:
-#             continue
-#         buckets_name.append([key, buckets[key]["name"], "bucket"])
-#         for item in buckets[key]["series"]:
-#             buckets_list.append([str(key), str(item)])
-
-#     writer = csv.writer(new_file, delimiter="|")
-#     writer.writerow(("bucket_id", "series_id"))
-#     writer.writerows(buckets_list)
-
-#     original_writer = csv.writer(file, delimiter="|")
-#     original_writer.writerows(buckets_name)
-#     await ctx.respond("`Complete!`")
+    async def callback(self, ctx: crescent.Context):
+        await ctx.respond("`Running SQL....`")
+        reponse = await plugin.model.utils.run_sql(self.sql)
+        await ctx.respond(reponse)
 
 
 @plugin.include
