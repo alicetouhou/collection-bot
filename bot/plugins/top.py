@@ -192,7 +192,7 @@ class TopCommand:
         #     await ctx.respond(f"**{character.first_name} {character.last_name}** has been moved to the top of your list.")
         # else:
         character_list = await user.characters
-        top_ten_characters = [await dbsearch.create_character_from_id(ctx.guild_id, char) for char in character_list[:10]]
+        top_ten_characters = await dbsearch.create_characters_from_ids(ctx.guild_id, character_list[:10])
         description = ""
 
         for index, character in enumerate(top_ten_characters):

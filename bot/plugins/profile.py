@@ -8,34 +8,30 @@ from PIL import Image
 
 from bot.upgrades import Upgrades
 from bot.model import Plugin
+from bot.character_instance import CharacterInstance
 
 plugin = Plugin()
 MASK_IMAGE = Image.open('bot/data/mask.png').convert('L')
 
 
-async def open_image_from_char_id(ctx: crescent.Context, character_id: int) -> io.BytesIO | None:
+async def open_image_from_characters(ctx: crescent.Context, characters: list[CharacterInstance]) -> list[io.BytesIO]:
     if not ctx.guild_id:
-        return None
+        return []
 
-    try:
-        character = await plugin.model.dbsearch.create_character_from_id(ctx.guild_id, character_id)
-
-        if character is None:
-            return None
-
+    image_list = []
+    for character in characters:
         default_image = await character.get_default_image()
 
         if default_image is None:
-            return None
+            continue
 
         image_url = character.images[default_image]
         async with aiohttp.ClientSession() as session:
             async with session.get(url=image_url) as response:
                 resp = await response.read()
                 image = io.BytesIO(resp)
-                return image
-    except:
-        return None
+                image_list.append(image)
+    return image_list
 
 
 @plugin.include
@@ -84,13 +80,12 @@ class InfoCommand:
         embed = hikari.embeds.Embed(
             title=f"{user.name}'s Stats", color="f598df", description=description)
         if character_list:
-            character_images = await asyncio.gather(
-                *map(lambda x: open_image_from_char_id(ctx, x), character_list[:10]
-                     ))
+            top_characters = await dbsearch.create_characters_from_ids(
+                ctx.guild_id, character_list[:10])
+            character_images = await open_image_from_characters(
+                ctx, top_characters)
 
-            filtered_chararacter_images = filter(
-                lambda item: item is not None, character_images)
-            pil_images = [Image.open(im) for im in filtered_chararacter_images]
+            pil_images = [Image.open(im) for im in character_images]
 
             combined_image = Image.new('RGBA', (5*150-38, 388), (0, 0, 0, 0))
             for index, image in enumerate(pil_images):

@@ -4,6 +4,7 @@ import asyncpg
 from bot.character import Character
 from bot.character_instance import CharacterInstance
 from bot.user import User
+from collections import defaultdict
 
 import hikari
 import re
@@ -48,11 +49,18 @@ class DBSearch:
             return None
 
     async def create_characters_from_ids(self, guild_id: hikari.Snowflake, ids: list[int], order_by=None) -> list[CharacterInstance]:
-        """Returns `list[Character]` for the IDs inputted. Only the name, id, and value are available."""
+        """Returns `list[Character]` for the IDs inputted."""
 
-        sql = f"""SELECT * FROM characters
-            JOIN claimed_characters ON claimed_characters.character_id = characters.id
-            WHERE id IN ({','.join([f"'{x}'" for x in ids])})
+        sql = f"""
+                SELECT claimed_characters.*, characters.*, character_series.*, series.name AS series_name, series.type AS type, 
+                buckets.name AS bucket_name, character_images.image, character_images.index AS image_index
+                FROM claimed_characters
+                LEFT JOIN characters ON claimed_characters.character_id = characters.id
+                LEFT JOIN character_series ON claimed_characters.character_id = character_series.character_id
+                LEFT JOIN character_images ON claimed_characters.character_id = character_images.character_id
+                LEFT JOIN series ON character_series.series_id = series.id
+                LEFT JOIN buckets ON series.bucket = buckets.id
+                WHERE claimed_characters.character_id IN ({','.join([f"'{x}'" for x in ids])})
             """
 
         if order_by == "value":
@@ -64,9 +72,17 @@ class DBSearch:
             records = await self.model.dbpool.fetch(sql)
 
             output = []
-            for record in records:
+
+            result = defaultdict(list)
+
+            for d in records:
+                result[d['character_id']].append(d)
+
+            result_list = list(result.values())
+
+            for record in result_list:
                 character = Character.from_record(
-                    await self.create_combined_record([record]))
+                    await self.create_combined_record(record))
                 instance = CharacterInstance(guild_id, character, self.model)
                 output.append(instance)
             return output
