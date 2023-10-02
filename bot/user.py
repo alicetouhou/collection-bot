@@ -1,6 +1,7 @@
 import typing as t
 
 from bot.character import Character
+from bot.character_instance import CharacterInstance
 from bot import shop_item as items
 from bot.upgrades import Upgrades, UpgradeEffects
 
@@ -278,6 +279,38 @@ class User:
         await self._remove_from_character_list(character)
         self._characters = await self._fetch_character_list()
 
+    async def move_to_top(self, character: Character):
+        await self._move_to_top(character)
+
+    async def set_top_chars(self, char_list: list[Character] | list[CharacterInstance], indices: list[int]) -> None:
+        if self.model.dbpool is None:
+            return None
+
+        if len(char_list) != len(indices):
+            return None
+
+        top_record = await self.model.dbpool.fetchrow(
+            f"SELECT list_order FROM claimed_characters WHERE guild_id = $1 AND player_id = $2 ORDER BY list_order ASC LIMIT 1",
+            str(self.guild),
+            str(self.player_id)
+        )
+
+        if top_record:
+            new_index = top_record[0] - 1
+        else:
+            new_index = -1
+
+        executelist = []
+        for i in range(0, len(indices)):
+            executelist.append([indices[i] + new_index - len(indices),
+                               char_list[len(indices)-1-i].id, str(self.guild), str(self.player_id)])
+
+        async with self.model.dbpool.acquire() as conn:
+            await conn.executemany(
+                f"UPDATE claimed_characters SET list_order = $1 WHERE character_id = $2 AND guild_id = $3 AND player_id = $4",
+                executelist,
+            )
+
     @property
     async def wishlist(self) -> list[int]:
         return await self._fetch_wishlist()
@@ -289,9 +322,6 @@ class User:
     async def remove_from_wishlist(self, character: Character):
         await self._remove_from_wishlist(character)
         self._characters = await self._fetch_wishlist()
-
-    async def move_to_top(self, character: Character):
-        await self._move_to_top(character)
 
     @property
     async def upgrades(self) -> dict[Upgrades, int]:

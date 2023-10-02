@@ -48,11 +48,11 @@ class Utils:
 
         return selected_character
 
-    async def validate_search_in_list(self, ctx: crescent.Context, user: User, char_search: str) -> CharacterInstance | None:
+    async def validate_search_in_list(self, ctx: crescent.Context, user: User, char_search: str | int) -> CharacterInstance | None:
         if not ctx.guild_id:
             return None
 
-        selected_character = await self.model.dbsearch.create_character_from_search(ctx.guild_id, char_search)
+        selected_character = await self.model.dbsearch.create_character_from_search(ctx.guild_id, str(char_search))
         user_character_ids = await user.characters
 
         if len(selected_character) == 0:
