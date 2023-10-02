@@ -87,7 +87,7 @@ class Claim(ShopItem):
 
     async def purchased(self, ctx: crescent.Context, user: 'User') -> bool:
         claims = await user.claims
-        await user.set_rolls(claims + 1)
+        await user.set_claims(claims + 1)
         await super().purchased(ctx, user)
         return True
 
