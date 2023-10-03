@@ -3,6 +3,7 @@ import hikari
 import io
 import aiohttp
 import asyncio
+import time
 
 from PIL import Image
 
@@ -14,23 +15,32 @@ plugin = Plugin()
 MASK_IMAGE = Image.open('bot/data/mask.png').convert('L')
 
 
+async def get_image(image_url: str) -> io.BytesIO:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=image_url) as response:
+            resp = await response.read()
+            image = io.BytesIO(resp)
+            return image
+
+
 async def open_image_from_characters(ctx: crescent.Context, characters: list[CharacterInstance]) -> list[io.BytesIO]:
     if not ctx.guild_id:
         return []
 
-    image_list = []
-    for character in characters:
-        default_image = await character.get_default_image()
+    tasks = []
+    image_list: list[io.BytesIO] = []
+    async with asyncio.TaskGroup() as tg:
+        for character in characters:
+            default_image = await character.get_default_image()
 
-        if default_image is None:
-            continue
+            if default_image is None:
+                continue
 
-        image_url = character.images[default_image]
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url=image_url) as response:
-                resp = await response.read()
-                image = io.BytesIO(resp)
-                image_list.append(image)
+            image_url = character.images[default_image]
+
+            tasks.append(tg.create_task(
+                get_image(image_url)))
+    image_list = [x.result() for x in tasks]
     return image_list
 
 
@@ -48,6 +58,8 @@ class InfoCommand:
         assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
 
+        print(f"Function start: {time.time()}")
+
         if not ctx.guild_id:
             return
 
@@ -62,21 +74,6 @@ class InfoCommand:
         )
 
         description = f'\n<:wishfragments:1148459769980530740> Wish Fragments: **{currency}**\n\n🥅 Claims available: **{claims}**\n🎲 Rolls available: **{rolls}**'
-        if character_list:
-
-            first_character = await dbsearch.create_character_from_id(ctx.guild_id, character_list[0])
-
-            if first_character is None:
-                return
-
-            default_image = await first_character.get_default_image()
-            if default_image:
-                first_image = first_character.images[default_image]
-            else:
-                first_image = first_character.images[0]
-
-            description = f'💛 Top character: **{first_character.first_name} {first_character.last_name}**\n📚 List size: **{len(character_list)}**' + \
-                description
         embed = hikari.embeds.Embed(
             title=f"{user.name}'s Stats", color="f598df", description=description)
         if character_list:
@@ -95,13 +92,19 @@ class InfoCommand:
                     resized_image, ((150 * index) % 750, int(index/5) * 213)
                 )
 
-            if first_character is None:
-                return
+            description = f'💛 Top character: **{top_characters[0].first_name} {top_characters[0].last_name}**\n📚 List size: **{len(character_list)}**' + \
+                description
 
             img_byte_arr = io.BytesIO()
             combined_image.save(img_byte_arr, format='PNG')
 
-            embed.set_thumbnail(first_image)
+            default_image = await top_characters[0].get_default_image()
+            if default_image:
+                embed.set_thumbnail(
+                    top_characters[0].images[default_image])
+            else:
+                embed.set_thumbnail(top_characters[0].images[0])
+
             embed.set_image(img_byte_arr.getvalue())
 
             embed.add_field(name="⬆️ Upgrade Levels",
@@ -114,3 +117,4 @@ class InfoCommand:
             embed.add_field(name="⠀",
                             value=f"**⭐ Display Case**")
         await ctx.respond(embed)
+        print(f"Function end: {time.time()}")
