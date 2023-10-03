@@ -58,8 +58,6 @@ class InfoCommand:
         assert ctx.guild_id is not None
         dbsearch = plugin.model.dbsearch
 
-        print(f"Function start: {time.time()}")
-
         if not ctx.guild_id:
             return
 
@@ -117,4 +115,3 @@ class InfoCommand:
             embed.add_field(name="⠀",
                             value=f"**⭐ Display Case**")
         await ctx.respond(embed)
-        print(f"Function end: {time.time()}")
