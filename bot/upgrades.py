@@ -60,7 +60,7 @@ class WishlistSize:
 class WishlistRateBonus:
 
     def modifier_as_int(self, level) -> int:
-        return int((math.log(level+1, 1.62) / 2387) * 10000 + 0.5)
+        return int((math.log(level+1, 1.62) / 3408) * 10000 + 0.5)
 
     def modifier(self, level) -> float:
         return self.modifier_as_int(level) / 10000
