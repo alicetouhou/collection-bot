@@ -26,7 +26,6 @@ class ClaimView(miru.View):
         assert ctx.guild_id, "This command can not be used in DMs"
 
         self.stop()
-        await self.on_timeout()
         user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
 
         claims = user.claims
@@ -34,7 +33,9 @@ class ClaimView(miru.View):
             await ctx.respond(
                 f"**{ctx.user.mention}** attempted to claim, but has **0** claims left!\nUse **/daily** to get more, or buy them with /shop."
             )
+            await self.start()
             return
+        await self.on_timeout()
         await user.append_to_characters(self.character)
         await user.set_claims(claims - 1)
         await ctx.respond(
@@ -174,11 +175,6 @@ async def roll_command(
             guild_id, user), dbsearch.create_random_character(guild_id)
     )
 
-    claimed, wishlist_people = await asyncio.gather(
-        picked_character.get_claimed_id(),
-        picked_character.get_wished_ids(),
-    )
-
     # We want to have a bigger chance for every item in the wishlist.
     # This number grows so it would be equivalent to checking a random number
     # is in bonus `len(wishlist)` times.
@@ -193,7 +189,11 @@ async def roll_command(
 
             if new_character is not None:
                 picked_character = new_character
-                wishlist_people = await picked_character.get_wished_ids()
+
+    claimed, wishlist_people = await asyncio.gather(
+        picked_character.get_claimed_id(),
+        picked_character.get_wished_ids(),
+    )
 
     if player.rolls <= 0:
         await send_error("You have no rolls left! Use **/getrolls** to claim more.")
