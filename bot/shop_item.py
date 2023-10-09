@@ -26,7 +26,7 @@ class ShopItem:
 
     async def purchased(self, ctx: crescent.Context, user: 'User') -> bool:
         await ctx.respond(
-            f"You purchased {self.article()} **{self.cased_name()}**!\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{(await user.currency) - self.price}**"
+            f"You purchased {self.article()} **{self.cased_name()}**!\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{(user.currency) - self.price}**"
         )
         return False
 
@@ -53,7 +53,7 @@ class Upgrade(ShopItem):
     async def purchased(self, ctx: crescent.Context, user: 'User') -> bool:
         await user.increase_upgrade_level(self.type)
         await ctx.respond(
-            f"You purchased **{self.cased_name()}**! Current level: **`Lv{self.level} → Lv{self.level+1}`**\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{(await user.currency) - self.price}**"
+            f"You purchased **{self.cased_name()}**! Current level: **`Lv{self.level} → Lv{self.level+1}`**\n<:wishfragments:1148459769980530740> Wish fragments remaining: **{(user.currency) - self.price}**"
         )
         return True
 
@@ -69,7 +69,7 @@ class Roll(ShopItem):
         )
 
     async def purchased(self, ctx: crescent.Context, user: 'User') -> bool:
-        rolls = await user.rolls
+        rolls = user.rolls
         await user.set_rolls(rolls + 1)
         await super().purchased(ctx, user)
         return True
@@ -86,8 +86,7 @@ class Claim(ShopItem):
         )
 
     async def purchased(self, ctx: crescent.Context, user: 'User') -> bool:
-        claims = await user.claims
-        await user.set_claims(claims + 1)
+        await user.set_claims(user.claims + 1)
         await super().purchased(ctx, user)
         return True
 
@@ -103,8 +102,7 @@ class ForbiddenScroll(ShopItem):
         )
 
     async def purchased(self, ctx: crescent.Context, user: 'User') -> bool:
-        claims = await user.claims
-        await user.set_rolls(claims + 1)
+        await user.set_rolls(user.claims + 1)
         await super().purchased(ctx, user)
         return True
 

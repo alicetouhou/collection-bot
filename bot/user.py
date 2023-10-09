@@ -18,17 +18,17 @@ class User:
     player_id: hikari.Snowflake | None = None
     name: str | None = None
 
-    _characters: list[int] | None = None
-    _wishlist: list[int] | None = None
+    _characters: list[int] = []
+    _wishlist: list[int] = []
 
-    _currency: int | None = None
-    _rolls: int | None = None
-    _claims: int | None = None
+    _currency: int = 0
+    _rolls: int = 0
+    _claims: int = 0
 
-    _rolls_claimed_time: int | None = None
-    _daily_claimed_time: int | None = None
+    _rolls_claimed_time: int = 0
+    _daily_claimed_time: int = 0
 
-    _upgrades: dict[Upgrades, int] | None = None
+    _upgrades: dict[Upgrades, int] = {}
 
     def __init__(self, guild_id: hikari.Snowflake, user: hikari.User, model):
         self.guild = guild_id
@@ -36,7 +36,7 @@ class User:
         self.name = user.username
         self.model: Model = model
 
-    async def add_player_to_db(self):
+    async def add_player_to_db(self) -> None:
         async with self.model.dbpool.acquire() as conn:
             await conn.execute(
                 f"INSERT INTO players VALUES ($1,$2,$3,3,0,10,0) ON CONFLICT DO NOTHING",
@@ -45,18 +45,71 @@ class User:
                 0,
             )
 
-    async def _fetch(self, param: t.Any, field: str) -> t.Any:
-        if self.model.dbpool is None:
-            return None
-
-        if param is None:
-            records = await self.model.dbpool.fetch(
-                f"SELECT {field} FROM players WHERE guild_id = $1 AND player_id = $2",
+    async def add_upgrades(self) -> None:
+        async with self.model.dbpool.acquire() as conn:
+            await conn.execute(
+                f"INSERT INTO upgrades VALUES ($1,$2,0,0,0,0,0,0) ON CONFLICT DO NOTHING",
                 str(self.guild),
-                str(self.player_id)
+                str(self.player_id),
             )
-            return records[0][field]
-        return param
+
+    async def populate(self) -> None:
+        if self.model.dbpool is None:
+            return
+
+        records = await self.model.dbpool.fetch(
+            f"""SELECT players.rolls, players.claims, players.claimed_rolls, players.claimed_daily, players.currency,
+            upgrades.*, claimed_characters.list_order,
+            claimed_characters.character_id AS claimed_character_id, wishlists.character_id AS wishlist_character_id
+            FROM players
+            LEFT JOIN upgrades ON upgrades.player_id = players.player_id AND upgrades.guild_id = players.guild_id
+            LEFT JOIN claimed_characters ON claimed_characters.player_id = players.player_id AND claimed_characters.guild_id = players.guild_id
+            LEFT JOIN wishlists ON wishlists.player_id = players.player_id AND wishlists.guild_id = players.guild_id
+            WHERE players.guild_id = $1 AND players.player_id = $2 ORDER BY list_order""",
+            str(self.guild),
+            str(self.player_id)
+        )
+
+        character_list = []
+        wishlist_list = []
+
+        for record in records:
+            if record["claimed_character_id"] not in character_list:
+                character_list.append(record["claimed_character_id"])
+            if record["wishlist_character_id"] not in wishlist_list:
+                wishlist_list.append(record["wishlist_character_id"])
+
+        if len(records) == 0:
+            await self.add_player_to_db()
+
+        self._rolls = records[0]["rolls"]
+        self._claims = records[0]["claims"]
+        self._rolls_claimed_time = records[0]["claimed_rolls"]
+        self._daily_claimed_time = records[0]["claimed_daily"]
+        self._currency = records[0]["currency"]
+
+        self._characters = character_list
+        self._wishlist = wishlist_list
+
+        if records[0]["roll_regen"] == None:
+            await self.add_upgrades()
+            self._upgrades = {
+                Upgrades.ROLL_REGEN: 0,
+                Upgrades.ROLL_MAX: 0,
+                Upgrades.DAILY_BONUS: 0,
+                Upgrades.FRAGMENT_BONUS: 0,
+                Upgrades.WISHLIST_SIZE: 0,
+                Upgrades.WISHLIST_RATE_BONUS: 0,
+            }
+        else:
+            self._upgrades = {
+                Upgrades.ROLL_REGEN: records[0]["roll_regen"],
+                Upgrades.ROLL_MAX: records[0]["roll_max"],
+                Upgrades.DAILY_BONUS: records[0]["daily_bonus"],
+                Upgrades.FRAGMENT_BONUS: records[0]["fragment_bonus"],
+                Upgrades.WISHLIST_SIZE: records[0]["wishlist_size"],
+                Upgrades.WISHLIST_RATE_BONUS: records[0]["wishlist_rate_bonus"],
+            }
 
     async def _execute(self, value: t.Any, field: str) -> str | None:
         if self.model.dbpool is None:
@@ -72,8 +125,8 @@ class User:
         return value
 
     @property
-    async def rolls(self) -> int:
-        return await self._fetch(self._rolls, "rolls")
+    def rolls(self) -> int:
+        return self._rolls
 
     async def set_rolls(self, value: int) -> None:
         await self._execute(value, "rolls")
@@ -82,8 +135,8 @@ class User:
             self._rolls = value
 
     @property
-    async def rolls_claimed_time(self) -> int:
-        return await self._fetch(self._rolls_claimed_time, "claimed_rolls")
+    def rolls_claimed_time(self) -> int:
+        return self._rolls_claimed_time
 
     async def set_rolls_claimed_time(self, value: int) -> None:
         await self._execute(value, "claimed_rolls")
@@ -92,8 +145,8 @@ class User:
             self._rolls_claimed_time = value
 
     @property
-    async def claims(self) -> int:
-        return await self._fetch(self._claims, "claims")
+    def claims(self) -> int:
+        return self._claims
 
     async def set_claims(self, value: int) -> None:
         await self._execute(value, "claims")
@@ -101,8 +154,8 @@ class User:
             self._claims = value
 
     @property
-    async def daily_claimed_time(self) -> int:
-        return await self._fetch(self._daily_claimed_time, "claimed_daily")
+    def daily_claimed_time(self) -> int:
+        return self._daily_claimed_time
 
     async def set_daily_claimed_time(self, value: int) -> None:
         await self._execute(value, "claimed_daily")
@@ -110,8 +163,8 @@ class User:
             self._daily_claimed_time = value
 
     @property
-    async def currency(self) -> int:
-        return await self._fetch(self._currency, "currency")
+    def currency(self) -> int:
+        return self._currency
 
     async def set_currency(self, value: int) -> None:
         await self._execute(value, "currency")
@@ -222,28 +275,6 @@ class User:
             str(self.player_id)
         )
 
-    async def _fetch_upgrades(self) -> dict[str, int]:
-        if self.model.dbpool is None:
-            return {}
-
-        records = await self.model.dbpool.fetch(
-            f"SELECT roll_regen,roll_max,daily_bonus,fragment_bonus,wishlist_size,wishlist_rate_bonus FROM upgrades WHERE guild_id = $1 AND player_id = $2",
-            str(self.guild),
-            str(self.player_id)
-        )
-
-        if len(records) == 1:
-            return records[0]
-
-        async with self.model.dbpool.acquire() as conn:
-            await conn.execute(
-                f"INSERT INTO upgrades VALUES ($1,$2,0,0,0,0,0,0) ON CONFLICT DO NOTHING",
-                str(self.guild),
-                str(self.player_id),
-            )
-
-        return await self._fetch_upgrades()
-
     async def _increase_upgrade_level(self, upgrade: Upgrades, amount: int) -> None:
         if self.model.dbpool is None:
             return None
@@ -257,19 +288,17 @@ class User:
             Upgrades.WISHLIST_RATE_BONUS: "wishlist_rate_bonus",
         }
 
-        upgrades = await self.upgrades
-
         async with self.model.dbpool.acquire() as conn:
             await conn.execute(
                 f"UPDATE upgrades SET {upgrades_name[upgrade]} = $1 WHERE guild_id = $2 AND player_id = $3",
-                upgrades[upgrade] + amount,
+                self.upgrades[upgrade] + amount,
                 str(self.guild),
                 str(self.player_id),
             )
 
     @property
-    async def characters(self) -> list[int]:
-        return await self._fetch_character_list()
+    def characters(self) -> list[int]:
+        return self._characters
 
     async def append_to_characters(self, character: Character):
         await self._append_to_chararacter_list(character)
@@ -312,8 +341,8 @@ class User:
             )
 
     @property
-    async def wishlist(self) -> list[int]:
-        return await self._fetch_wishlist()
+    def wishlist(self) -> list[int]:
+        return self._wishlist
 
     async def append_to_wishlist(self, character: Character):
         await self._append_to_wishlist(character)
@@ -324,35 +353,23 @@ class User:
         self._characters = await self._fetch_wishlist()
 
     @property
-    async def upgrades(self) -> dict[Upgrades, int]:
-        upgrades = await self._fetch_upgrades()
-
-        upgrades_dict = {
-            Upgrades.ROLL_REGEN: upgrades["roll_regen"],
-            Upgrades.ROLL_MAX: upgrades["roll_max"],
-            Upgrades.DAILY_BONUS: upgrades["daily_bonus"],
-            Upgrades.FRAGMENT_BONUS: upgrades["fragment_bonus"],
-            Upgrades.WISHLIST_SIZE: upgrades["wishlist_size"],
-            Upgrades.WISHLIST_RATE_BONUS: upgrades["wishlist_rate_bonus"],
-        }
-
-        return upgrades_dict
+    def upgrades(self) -> dict[Upgrades, int]:
+        return self._upgrades
 
     async def increase_upgrade_level(self, upgrade: Upgrades, amount: int = 1) -> None:
         await self._increase_upgrade_level(upgrade, amount)
 
     async def get_upgrade_shop_objects(self) -> list[items.Upgrade]:
-        upgrades = await self.upgrades
         return [
-            items.RollGenerationRate(level=upgrades[Upgrades.ROLL_REGEN]),
-            items.RollMaximum(level=upgrades[Upgrades.ROLL_MAX]),
-            items.FragmentBonus(level=upgrades[Upgrades.FRAGMENT_BONUS]),
-            items.DailyBounty(level=upgrades[Upgrades.DAILY_BONUS]),
-            items.WishlistSize(level=upgrades[Upgrades.WISHLIST_SIZE]),
-            items.WishlistRateUp(level=upgrades[Upgrades.WISHLIST_RATE_BONUS]),
+            items.RollGenerationRate(level=self.upgrades[Upgrades.ROLL_REGEN]),
+            items.RollMaximum(level=self.upgrades[Upgrades.ROLL_MAX]),
+            items.FragmentBonus(level=self.upgrades[Upgrades.FRAGMENT_BONUS]),
+            items.DailyBounty(level=self.upgrades[Upgrades.DAILY_BONUS]),
+            items.WishlistSize(level=self.upgrades[Upgrades.WISHLIST_SIZE]),
+            items.WishlistRateUp(
+                level=self.upgrades[Upgrades.WISHLIST_RATE_BONUS]),
         ]
 
-    async def get_upgrade_value(self, value: Upgrades) -> int | float:
-        upgrades = await self.upgrades
-        output = UpgradeEffects.upgrades[value].modifier(upgrades[value])
+    def get_upgrade_value(self, value: Upgrades) -> int | float:
+        output = UpgradeEffects.upgrades[value].modifier(self.upgrades[value])
         return output

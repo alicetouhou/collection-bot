@@ -35,13 +35,11 @@ class Utils:
 
         selected_character = await self.model.dbsearch.create_character_from_id(ctx.guild_id, char_id)
 
-        user_character_ids = await user.characters
-
         if not selected_character:
             await ctx.respond(f"{char_id} is not a valid ID!")
             return None
 
-        if char_id not in user_character_ids:
+        if char_id not in user.characters:
             await ctx.respond(
                 f"**{selected_character.first_name} {selected_character.last_name}** is not in your list!"
             )
@@ -54,7 +52,6 @@ class Utils:
             return None
 
         selected_character = await self.model.dbsearch.create_character_from_search(ctx.guild_id, str(char_search))
-        user_character_ids = await user.characters
 
         if len(selected_character) == 0:
             await ctx.respond(f"Your query `{char_search}` did not return any results.")
@@ -64,7 +61,7 @@ class Utils:
             await ctx.respond(f"Your query `{char_search}` returned more than one result.")
             return None
 
-        if selected_character[0].id not in user_character_ids:
+        if selected_character[0].id not in user.characters:
             await ctx.respond(
                 f"**{selected_character[0].first_name} {selected_character[0].last_name}** is not in your list!"
             )
@@ -249,7 +246,7 @@ class Utils:
         options = ctx.options
         user = await self.model.dbsearch.create_user(ctx.guild_id, ctx.user)
         if char_filter is None:
-            char_filter = await user.characters
+            char_filter = user.characters
         character_list = await self.model.dbsearch.create_character_from_search(
             ctx.guild_id,
             options[option],

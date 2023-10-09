@@ -19,7 +19,7 @@ class DBSearch:
 
     async def create_user(self, guild_id: hikari.Snowflake, player_id: hikari.User) -> User:
         user = User(guild_id, player_id, self.model)
-        await user.add_player_to_db()
+        await user.populate()
         return user
 
     async def create_character(self, guild_id: hikari.Snowflake, character: Character) -> CharacterInstance:
@@ -50,6 +50,9 @@ class DBSearch:
 
     async def create_characters_from_ids(self, guild_id: hikari.Snowflake, ids: list[int], order_by=None) -> list[CharacterInstance]:
         """Returns `list[Character]` for the IDs inputted."""
+
+        if len(ids) == 0:
+            return []
 
         sql = f"""
                 SELECT claimed_characters.*, characters.*, character_series.*, series.name AS series_name, series.type AS type, 

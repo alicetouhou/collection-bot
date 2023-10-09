@@ -159,7 +159,6 @@ class TopCommand:
         dbsearch = plugin.model.dbsearch
 
         user = await dbsearch.create_user(ctx.guild_id, ctx.user)
-        character_list = await user.characters
 
         params_list = [self.tenth, self.ninth, self.eighth, self.seventh, self.sixth,
                        self.fifth, self.fourth, self.third, self.second, self.first]
@@ -168,7 +167,7 @@ class TopCommand:
         for i in range(0, 10):
             param = params_list[i]
             if param is None:
-                char = character_list[9-i]
+                char = user.characters[9-i]
                 if not char:
                     return
                 character = await plugin.model.utils.validate_search_in_list(ctx, user, char)
@@ -185,14 +184,9 @@ class TopCommand:
 
         await user.set_top_chars(new_top_order, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-        # if not self.second and not self.third and not self.fourth and not self.fifth:
-        #     character = await plugin.model.utils.validate_search_in_list(ctx, user, self.first)
-        #     if not character:
-        #         return
-        #     await ctx.respond(f"**{character.first_name} {character.last_name}** has been moved to the top of your list.")
-        # else:
-        character_list = await user.characters
-        top_ten_characters = await dbsearch.create_characters_from_ids(ctx.guild_id, character_list[:10])
+        del user
+        user = await dbsearch.create_user(ctx.guild_id, ctx.user)
+        top_ten_characters = await dbsearch.create_characters_from_ids(ctx.guild_id, user.characters[:10])
         description = ""
 
         for index, character in enumerate(top_ten_characters):

@@ -36,11 +36,10 @@ class WishListCommand:
         dbsearch = plugin.model.dbsearch
         user = await dbsearch.create_user(ctx.guild_id, ctx.user if self.member is None else self.member)
 
-        wishlist = await user.wishlist
-        wishlist_size = await user.get_upgrade_value(Upgrades.WISHLIST_SIZE)
+        wishlist_size = user.get_upgrade_value(Upgrades.WISHLIST_SIZE)
 
         character_list = []
-        for character_id in wishlist:
+        for character_id in user.wishlist:
             character_instance = await dbsearch.create_character_from_id(ctx.guild_id, character_id)
 
             if character_instance is not None:
@@ -74,8 +73,7 @@ class WishAddCommand:
 
         user = await dbsearch.create_user(ctx.guild_id, ctx.user)
 
-        user_character_ids = await user.wishlist
-        wishlist_size = await user.get_upgrade_value(Upgrades.WISHLIST_SIZE)
+        wishlist_size = user.get_upgrade_value(Upgrades.WISHLIST_SIZE)
         character_list = await dbsearch.create_character_from_search(ctx.guild_id, self.search)
 
         if len(character_list) != 1:
@@ -86,11 +84,11 @@ class WishAddCommand:
 
         character = character_list[0]
 
-        if character.id in user_character_ids:
+        if character.id in user.wishlist:
             await ctx.respond(f"**{character.first_name} {character.last_name}** is already in your wishlist.")
             return None
 
-        if len(user_character_ids) >= wishlist_size:
+        if len(user.wishlist) >= wishlist_size:
             await ctx.respond(f"You can not add more than {wishlist_size} characters to your wishlist.")
             return
 
@@ -118,8 +116,6 @@ class WishRemoveCommand:
         user = await dbsearch.create_user(ctx.guild_id, ctx.user)
         character_list = await dbsearch.create_character_from_search(ctx.guild_id, self.search)
 
-        user_character_ids = await user.wishlist
-
         if len(character_list) != 1:
             await ctx.respond(
                 f"You may only remove one character to your wishlist at a time. Make sure your search returns a unique value."
@@ -128,7 +124,7 @@ class WishRemoveCommand:
 
         character = character_list[0]
 
-        if character.id not in user_character_ids:
+        if character.id not in user.wishlist:
             await ctx.respond(f"**{character.first_name} {character.last_name}** is not in your wishlist.")
             return None
 

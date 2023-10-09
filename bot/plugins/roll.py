@@ -29,7 +29,7 @@ class ClaimView(miru.View):
         await self.on_timeout()
         user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
 
-        claims = await user.claims
+        claims = user.claims
         if claims <= 0:
             await ctx.respond(
                 f"**{ctx.user.mention}** attempted to claim, but has **0** claims left!\nUse **/daily** to get more, or buy them with /shop."
@@ -67,8 +67,8 @@ class FragmentView(miru.View):
         self.stop()
         await self.on_timeout()
         user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
-        currency = await user.currency
-        multiplier = await user.get_upgrade_value(Upgrades.FRAGMENT_BONUS)
+        currency = user.currency
+        multiplier = user.get_upgrade_value(Upgrades.FRAGMENT_BONUS)
         await user.set_currency(currency + int(self.character.value * multiplier))
         description = f"**{ctx.user.mention}** obtained **{self.character.value}**<:wishfragments:1148459769980530740>"
         if multiplier > 1:
@@ -169,35 +169,33 @@ async def roll_command(
 
     dbsearch = plugin.model.dbsearch
 
-    user, picked_character = await asyncio.gather(
+    player, picked_character = await asyncio.gather(
         dbsearch.create_user(
             guild_id, user), dbsearch.create_random_character(guild_id)
     )
 
-    rolls, bonus, claimed, wishlist, wishlist_people = await asyncio.gather(
-        user.rolls,
-        user.get_upgrade_value(Upgrades.WISHLIST_RATE_BONUS),
+    claimed, wishlist_people = await asyncio.gather(
         picked_character.get_claimed_id(),
-        user.wishlist,
         picked_character.get_wished_ids(),
     )
 
     # We want to have a bigger chance for every item in the wishlist.
     # This number grows so it would be equivalent to checking a random number
     # is in bonus `len(wishlist)` times.
-    bonus = 1 - (1 - bonus) ** len(wishlist)
+    bonus = player.get_upgrade_value(Upgrades.WISHLIST_RATE_BONUS)
+    bonus = 1 - (1 - bonus) ** len(player.wishlist)
 
-    if bonus and len(wishlist) > 0:
+    if bonus and len(player.wishlist) > 0:
         random_number = random.random()
         if random_number < bonus:
-            random_index = random.choice(wishlist)
+            random_index = random.choice(player.wishlist)
             new_character = await dbsearch.create_character_from_id(guild_id, random_index)
 
             if new_character is not None:
                 picked_character = new_character
                 wishlist_people = await picked_character.get_wished_ids()
 
-    if rolls <= 0:
+    if player.rolls <= 0:
         await send_error("You have no rolls left! Use **/getrolls** to claim more.")
         return
 
@@ -211,7 +209,8 @@ async def roll_command(
         view = FragmentView(timeout=180, character=picked_character)
 
     embed = await picked_character.get_claimable_embed()
-    embed.set_footer(f"{rolls - 1} roll{'s' if rolls != 2 else ''} remaining")
+    embed.set_footer(
+        f"{player.rolls - 1} roll{'s' if player.rolls != 2 else ''} remaining")
 
     message = await send_response(
         wishlist_people_formatted,
@@ -220,4 +219,4 @@ async def roll_command(
     )
     await view.start(message)
 
-    await user.set_rolls(rolls - 1)
+    await player.set_rolls(player.rolls - 1)

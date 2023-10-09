@@ -44,10 +44,9 @@ class ListCommand:
         dbsearch = plugin.model.dbsearch
         user = await dbsearch.create_user(ctx.guild_id, ctx.user if self.member is None else self.member)
 
-        characters = await user.characters
-        character_list = await dbsearch.create_characters_from_ids(ctx.guild_id, characters, order_by=self.order)
+        character_list = await dbsearch.create_characters_from_ids(ctx.guild_id, user.characters, order_by=self.order)
 
-        first_character = await dbsearch.create_character_from_id(ctx.guild_id, characters[0])
+        first_character = await dbsearch.create_character_from_id(ctx.guild_id, user.characters[0])
 
         if first_character is None:
             return

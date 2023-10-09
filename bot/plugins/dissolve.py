@@ -34,8 +34,7 @@ class DissolveCommand:
         if character is None:
             return
 
-        current_currency = await user.currency
-        await user.set_currency(current_currency + character.value)
+        await user.set_currency(user.currency + character.value)
         await user.remove_from_characters(character)
         await ctx.respond(
             f"You turned **{character.first_name} {character.last_name}** into <:wishfragments:1148459769980530740> {character.value} wish fragments. In additon, they are now claimable by any player."

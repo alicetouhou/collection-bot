@@ -16,20 +16,18 @@ class DailyCommand:
 
         user = await dbsearch.create_user(ctx.guild_id, ctx.user)
 
-        last_claim_time = await user.daily_claimed_time
+        last_claim_time = user.daily_claimed_time
         current_time = int(time.time())
         message = ""
 
-        number_of_claims = int(await user.get_upgrade_value(Upgrades.DAILY_BONUS))
+        number_of_claims = int(user.get_upgrade_value(Upgrades.DAILY_BONUS))
 
         if current_time - last_claim_time >= 86400:
             wishfragment_number = random.randint(
                 350 + (number_of_claims - 5) * 200, 600 + (number_of_claims - 5) * 200)
-            current_claims = await user.claims
-            current_currency = await user.currency
-            await user.set_claims(current_claims + number_of_claims)
+            await user.set_claims(user.claims + number_of_claims)
             await user.set_daily_claimed_time(current_time)
-            await user.set_currency(current_currency + wishfragment_number)
+            await user.set_currency(user.currency + wishfragment_number)
             message = f"Daily claimed! **{number_of_claims}** claims have been added to your inventory, as well as <:wishfragments:1148459769980530740> **{wishfragment_number}** wish fragments. Next daily can be claimed in **24 hours**."
         else:
             diff = (last_claim_time + 86400) - current_time

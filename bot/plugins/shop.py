@@ -18,8 +18,7 @@ class ViewCommand:
         assert ctx.guild_id
 
         user = await plugin.model.dbsearch.create_user(ctx.guild_id, ctx.user)
-        currency = await user.currency
-        description = f"Use `/shop buy item name` to buy items • Current balance <:wishfragments:1148459769980530740> **{currency}**\n\n"
+        description = f"Use `/shop buy item name` to buy items • Current balance <:wishfragments:1148459769980530740> **{user.currency}**\n\n"
 
         for item in shop_items:
             description += item.description_line() + "\n"
@@ -67,13 +66,12 @@ class BuyCommand:
             await ctx.respond(f"**{self.item}** is not a valid item!")
             return
 
-        currency = await user.currency
         selected_item = combined_list[self.item]
 
-        if currency >= selected_item.price:
+        if user.currency >= selected_item.price:
             purchased = await selected_item.purchased(ctx, user)
             if purchased:
-                await user.set_currency(currency - selected_item.price)
+                await user.set_currency(user.currency - selected_item.price)
 
             return
 

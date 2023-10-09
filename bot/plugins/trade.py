@@ -167,8 +167,8 @@ class TradeConfirmCommand:
 
         await ctx.respond(embed)
 
-        await user_a.set_currency((await user_a.currency) + current_trade.b_currency - current_trade.a_currency)
-        await user_b.set_currency((await user_b.currency) + current_trade.a_currency - current_trade.b_currency)
+        await user_a.set_currency(user_a.currency + current_trade.b_currency - current_trade.a_currency)
+        await user_b.set_currency(user_b.currency + current_trade.a_currency - current_trade.b_currency)
 
         for character in current_trade.a_list:
             await user_a.remove_from_characters(character)
@@ -286,14 +286,12 @@ class TradeAddFragmentsCommand:
                 trade_id = trade
                 break
 
-        currency = await user.currency
-
         if trade_id == "":
             await ctx.respond("You are not currently in a trade!")
             return
 
-        if currency < self.amount:
-            await ctx.respond(f"You don't have that many wish fragments to trade. Your current balance is **<:wishfragments:1148459769980530740>{currency}**")
+        if user.currency < self.amount:
+            await ctx.respond(f"You don't have that many wish fragments to trade. Your current balance is **<:wishfragments:1148459769980530740>{user.currency}**")
             return
 
         if ctx.user == current_trades[trade_id].a:

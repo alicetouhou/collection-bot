@@ -15,28 +15,28 @@ class GetRollsCommand:
 
         user = await dbsearch.create_user(ctx.guild_id, ctx.user)
 
-        regeneration_rate = int(await user.get_upgrade_value(Upgrades.ROLL_REGEN))
-        roll_max = int(await user.get_upgrade_value(Upgrades.ROLL_MAX))
+        regeneration_rate = int(user.get_upgrade_value(Upgrades.ROLL_REGEN))
+        roll_max = int(user.get_upgrade_value(Upgrades.ROLL_MAX))
 
-        last_claim_time = await user.rolls_claimed_time
         current_time = int(time.time())
         message = ""
 
-        stockpile = int((current_time - last_claim_time) / regeneration_rate)
+        stockpile = int((current_time - user.rolls_claimed_time) /
+                        regeneration_rate)
 
-        if (last_claim_time) == 0:
+        if (user.rolls_claimed_time) == 0:
             stockpile = 10
             await user.set_rolls_claimed_time(current_time)
-            await user.set_rolls((await user.rolls) + stockpile)
+            await user.set_rolls(user.rolls + stockpile)
             regenerate_time = 900
             rolls_to_be_claimed = 10
         else:
             rolls_to_be_claimed = min(stockpile, roll_max)
-            last_regeneration = last_claim_time + stockpile * regeneration_rate
+            last_regeneration = user.rolls_claimed_time + stockpile * regeneration_rate
             regenerate_time = regeneration_rate - \
                 (current_time - last_regeneration)
             await user.set_rolls_claimed_time(last_regeneration)
-            await user.set_rolls((await user.rolls) + rolls_to_be_claimed)
+            await user.set_rolls(user.rolls + rolls_to_be_claimed)
         message = f"{rolls_to_be_claimed} roll{'s' if rolls_to_be_claimed != 1 else ''} have been claimed.\nNext roll regenerates in: **{int(regenerate_time/60)}** minutes and **{regenerate_time % 60}** seconds"
 
         await ctx.respond(message)
