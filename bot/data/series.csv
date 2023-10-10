@@ -374,7 +374,7 @@ id|name|type|bucket
 54586|Fuuka|anime|200220
 73885|Fuuka|manga|200220
 82942|GE: Good Ending|manga|0
-644|GTO|manga|0
+644|GTO|manga|201047
 57838|Ga-Rei: Zero|anime|0
 31977|Gabriel DropOut|anime|0
 55081|Gaikotsu Kishi-sama|anime|0
@@ -782,7 +782,7 @@ id|name|type|bucket
 84020|Koi wo Hajimemasu|manga|0
 55718|Koibito Miman.|anime|200476
 75546|Koibito Miman.|manga|200476
-56502|Kokoro Connect: Michi Random|anime|0
+56502|Kokoro Connect: Michi Random|anime|201050
 16452|Kokoro ga Sakebitagatterunda.|anime|0
 14774|Kokou no Hito|manga|0
 10175|Komi-san wa|anime|200480
@@ -950,9 +950,9 @@ id|name|type|bucket
 1977|Mononoke Hime|anime|200581
 2251|Monster|anime|200582
 3047|Monster|manga|200582
-30383|Monster Musume no Iru Nichijou|anime|200582
-41106|Monster Musume no Iru Nichijou|manga|200582
-13500|Motto To LOVE-Ru|anime|0
+30383|Monster Musume no Iru Nichijou|anime|200013
+41106|Monster Musume no Iru Nichijou|manga|200013
+13500|Motto To LOVE-Ru|anime|200867
 31437|Mousou Dairinin|anime|0
 79885|Mugen no Juunin|manga|0
 53540|Munou na Nana|anime|0
@@ -1464,7 +1464,7 @@ id|name|type|bucket
 5744|Touhou Suichouka: Lotus Eater-tachi no Suisei|manga|201002
 1417|Touhou Suzunaan: Forbidden Scrollery.|manga|201002
 62162|Tower of God|manga|0
-10691|Trigun|anime|0
+10691|Trigun|anime|201048
 84709|Trinity Seven: 7-nin no Mashotsukai|manga|0
 84325|Tsubaki-chou Lonely Planet|manga|0
 20572|Tsubasa: RESERVoir CHRoNiCLE|manga|0
@@ -1481,7 +1481,7 @@ id|name|type|bucket
 24916|Uchouten Kazoku 2|anime|201028
 11855|Uchuu Kyoudai|anime|0
 12499|Uchuu Senkan Yamato 2199|anime|0
-12198|Uma Musume: Pretty Derby Season 2|anime|0
+12198|Uma Musume: Pretty Derby Season 2|anime|201049
 79645|Umibe no Onnanoko|manga|0
 12493|Usagi Drop|anime|200926
 17087|Usagi Drop|manga|200926
@@ -1682,7 +1682,7 @@ id|name|type|bucket
 108598|Koukaku no Regios|anime|0
 108599|Meikyuu Black Company|anime|0
 108600|Bleach Movie 4: Jigoku-hen|anime|0
-108601|Monster Musume no Oishasan|anime|0
+108601|Monster Musume no Oishasan|anime|200013
 108602|Uchi no Ko no Tame naraba, Ore wa Moshikashitara Maou mo Taoseru kamo Shirenai.|anime|0
 108603|Joker Game|anime|0
 108604|Kono Naka ni Hitori, Imouto ga Iru!|anime|0
@@ -1748,7 +1748,7 @@ id|name|type|bucket
 108664|Papa no Iukoto wo Kikinasai!|anime|0
 108665|Shinka no Mi: Shiranai Uchi ni Kachigumi Jinsei|anime|0
 108666|Baki: Dai Raitaisai-hen|anime|0
-108667|Elfen Lied: Tooriame nite Arui wa, Shoujo wa Ikani Shite Sono Shinjou ni Itatta ka? - Regenschauer|anime|0
+108667|Elfen Lied: Tooriame nite Arui wa, Shoujo wa Ikani Shite Sono Shinjou ni Itatta ka? - Regenschauer|anime|201019
 108668|Isekai Yakkyoku|anime|0
 108669|Ryuuou no Oshigoto!|anime|0
 108670|No Guns Life|anime|0
@@ -1844,7 +1844,7 @@ id|name|type|bucket
 108760|C³|anime|0
 108761|Akkun to Kanojo|anime|0
 108762|Shuumatsu no Izetta|anime|0
-108763|To LOVE-Ru OVA|anime|0
+108763|To LOVE-Ru OVA|anime|200867
 108764|Akebi-chan no Sailor-fuku|anime|0
 108765|Onegai☆Teacher|anime|0
 108766|Hoshizora e Kakaru Hashi|anime|0
@@ -1938,7 +1938,7 @@ id|name|type|bucket
 108854|Mahou Shoujo Ikusei Keikaku|anime|0
 108855|Ore, Twintail ni Narimasu.|anime|0
 108856|Aa! Megami-sama! (TV)|anime|0
-108857|Trigun Stampede|anime|0
+108857|Trigun Stampede|anime|201048
 108858|Ore dake Level Up na Ken|anime|0
 108859|Clockwork Planet|anime|0
 108860|Shinobi no Ittoki|anime|0
@@ -2055,7 +2055,7 @@ id|name|type|bucket
 108971|Ore no Imouto ga Konnani Kawaii Wake ga Nai. Specials|anime|200651
 108972|Corpse Party: Missing Footage|anime|0
 108973|Oushitsu Kyoushi Heine|anime|0
-108974|Trigun: Badlands Rumble|anime|0
+108974|Trigun: Badlands Rumble|anime|201048
 108975|Arslan Senki (TV): Fuujin Ranbu|anime|0
 108976|Slayers|anime|0
 108977|Hyouken no Majutsushi ga Sekai wo Suberu|anime|0
