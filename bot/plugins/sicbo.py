@@ -109,8 +109,8 @@ class InfoCommand:
                     result = f"Congrats! I rolled **{self.parameter}** at least 2 times, and your wager dectupled from **<:wishfragments:1148459769980530740>{self.wager}** to **<:wishfragments:1148459769980530740>{self.wager * 10}**. You now have <:wishfragments:1148459769980530740>**{user.currency}** wish fragments"
             case "triple":
                 if diceroll_1 == diceroll_2 and diceroll_2 == diceroll_3 and diceroll_1 == self.parameter:
-                    await user.set_currency(user.currency + self.wager * 199)
-                    result = f"Congrats! I rolled **{self.parameter}** 3 times, and your wager increased 200x from **<:wishfragments:1148459769980530740>{self.wager}** to **<:wishfragments:1148459769980530740>{self.wager * 200}**. You now have <:wishfragments:1148459769980530740>**{user.currency}** wish fragments"
+                    await user.set_currency(user.currency + self.wager * 179)
+                    result = f"Congrats! I rolled **{self.parameter}** 3 times, and your wager increased 180x from **<:wishfragments:1148459769980530740>{self.wager}** to **<:wishfragments:1148459769980530740>{self.wager * 180}**. You now have <:wishfragments:1148459769980530740>**{user.currency}** wish fragments"
             case "total":
                 if sum == self.parameter:
                     payout_amount = total_rates[self.parameter]
