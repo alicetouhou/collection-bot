@@ -79,6 +79,8 @@ class BoardView(miru.View):
     def get_payout(self) -> int:
         if self.sum == self.goal:
             return 300
+        if self.sum <= self.goal - 3:
+            return int(self.wager * pow((self.sum / self.goal), 4))
         return int(self.wager * pow((self.sum * 1.26 / self.goal), 3))
 
     def reveal_button(self, button: miru.Button | t.Any, cell: int):
