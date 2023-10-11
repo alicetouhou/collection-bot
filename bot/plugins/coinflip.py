@@ -34,7 +34,7 @@ class InfoCommand:
         if flip == "heads":
             await user.set_currency(user.currency + self.wager)
             await ctx.respond(
-                f"Congrats! I flipped heads, and your wager doubled from **<:wishfragments:1148459769980530740>{self.wager}** to **<:wishfragments:1148459769980530740>{self.wager * 2}**. You now have <:wishfragments:1148459769980530740>**{user.currency}** wish fragments"
+                f"Congrats! I flipped heads, and your wager doubled from **<:wishfragments:1148459769980530740>{self.wager}** to **<:wishfragments:1148459769980530740>{self.wager * 2}**. You now have <:wishfragments:1148459769980530740>**{user.currency}** wish fragments."
             )
         else:
             await user.set_currency(user.currency - self.wager)
