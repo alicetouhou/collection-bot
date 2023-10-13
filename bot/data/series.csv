@@ -870,8 +870,8 @@ id|name|type|bucket
 57978|MM!|anime|0
 30228|Machikado Mazoku|anime|0
 53384|Machine-Doll wa Kizutsukanai|anime|0
-28877|Macross F Movie 2: Sayonara no Tsubasa|anime|0
-20251|Macross: Do You Remember Love?|anime|0
+28877|Macross F Movie 2: Sayonara no Tsubasa|anime|200024
+20251|Macross: Do You Remember Love?|anime|200024
 2349|Made in Abyss|anime|200532
 3187|Made in Abyss|manga|200532
 21601|Made in Abyss Movie 1: Tabidachi no Yoake|anime|200532
@@ -1593,8 +1593,8 @@ id|name|type|bucket
 18575|Zom 100: Zombie ni Naru made ni Shitai 100 no Koto|anime|0
 31349|Zombieland Saga|anime|200996
 10976|Zombieland Saga Revenge|anime|200996
-26517|ef: A Tale of Melodies.|anime|0
-26518|ef: A Tale of Memories.|anime|0
+26517|ef: A Tale of Melodies.|anime|200023
+26518|ef: A Tale of Memories.|anime|200023
 17276|xxxHOLiC|anime|200999
 20571|xxxHOLiC|manga|200999
 19961|xxxHOLiC Rou|anime|200999
@@ -2018,7 +2018,7 @@ id|name|type|bucket
 108934|Baby Steps|anime|0
 108935|Ao Haru Ride OVA|anime|0
 108936|Bishoujo Senshi Sailor Moon Crystal|anime|200076
-108937|Macross F|anime|0
+108937|Macross F|anime|200024
 108938|Kishibe Rohan wa Ugokanai|anime|0
 108939|Tsuki to Laika to Nosferatu|anime|0
 108940|Astarotte no Omocha!|anime|0
@@ -2096,3 +2096,4 @@ id|name|type|bucket
 109012|"Gyakuten Saiban: Sono ""Shinjitsu"", Igi Ari!"|anime|0
 109013|Miira no Kaikata|anime|0
 109014|Spy Kyoushitsu|anime|0
+109015|Honkai: Star Rail|game|0
