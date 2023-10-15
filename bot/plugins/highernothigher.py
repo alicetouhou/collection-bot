@@ -13,12 +13,22 @@ highernothigher_group = crescent.Group("highernothigher")
 
 
 def create_board(height, width) -> list[list[int]]:
-    board = [[(i + k) % 10 + 1 for i in range(1, height + 1)]
-             for k in range(width)]
-    random.shuffle(board)
-    board = [[board[x][y] for x in range(width)] for y in range(height)]
-    random.shuffle(board)
-    return board
+    row_maximums = random.choice([[9, 8, 7, 6], [8, 7, 6, 5], [9, 7, 6, 5]])
+    random.shuffle(row_maximums)
+
+    board = [[i, None, None, None] for i in row_maximums]
+    output_board: list[list[int]] = [[0, 0, 0, 0] for _ in range(4)]
+
+    [random.shuffle(row) for row in board]
+
+    for i, row in enumerate(board):
+        for j, number in enumerate(row):
+            if number == None or number is None:
+                output_board[i][j] = random.randint(1, row_maximums[i])
+            else:
+                output_board[i][j] = number
+
+    return output_board
 
 
 def generate_grid() -> list[list[dict[str, int]]]:
@@ -78,10 +88,14 @@ class BoardView(miru.View):
 
     def get_payout(self) -> int:
         if self.sum == self.goal:
-            return 300
-        if self.sum <= self.goal - 3:
+            return int(self.wager * 2.5)
+        elif self.sum == self.goal - 1:
+            return int(self.wager * 1.33)
+        elif self.sum == self.goal - 2:
+            return int(self.wager * 1.15)
+        elif self.sum <= self.goal - 3:
             return int(self.wager * pow((self.sum / self.goal), 4))
-        return int(self.wager * pow((self.sum * 1.26 / self.goal), 3))
+        return self.wager
 
     def reveal_button(self, button: miru.Button | t.Any, cell: int):
         button.disabled = True
@@ -199,7 +213,7 @@ class BoardView(miru.View):
         payout = self.get_payout()
         await user.set_currency(user.currency + payout)
         await ctx.respond(
-            f"Congrats! I flipped heads, and your wager increased from **<:wishfragments:1148459769980530740>{self.wager}** to **<:wishfragments:1148459769980530740>{payout}**. You now have <:wishfragments:1148459769980530740>**{user.currency}** wish fragments."
+            f"Congrats! Your number wasn't higher than the target, and your wager increased from **<:wishfragments:1148459769980530740>{self.wager}** to **<:wishfragments:1148459769980530740>{payout}**. You now have <:wishfragments:1148459769980530740>**{user.currency}** wish fragments."
         )
         await self.on_timeout()
 
