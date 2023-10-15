@@ -92,9 +92,9 @@ id|name|type|bucket
 15045|Bakuman. 2nd Season|anime|200060
 15044|Bakuman. 3rd Season|anime|200060
 3939|Ballroom e Youkoso|anime|0
-13651|BanG Dream! 3rd Season|anime|0
-13653|BanG Dream! It's MyGO!!!!!|anime|0
-13652|BanG Dream! Movie: Episode of Roselia - II: Song I Am.|anime|0
+13651|BanG Dream! 3rd Season|anime|200016
+13653|BanG Dream! It's MyGO!!!!!|anime|200016
+13652|BanG Dream! Movie: Episode of Roselia - II: Song I Am.|anime|200016
 12164|Banana Fish|anime|200065
 16634|Banana Fish|manga|200065
 576|Barakamon|anime|0
@@ -224,7 +224,7 @@ id|name|type|bucket
 32041|Dagashi Kashi|anime|201029
 33047|Dakara Boku wa|anime|0
 3522|Dandadan|manga|0
-53626|Danganronpa 3: The End of Kibougamine Gakuen - Zetsubou-hen|anime|0
+53626|Danganronpa 3: The End of Kibougamine Gakuen - Zetsubou-hen|anime|200015
 8536|Danshi Koukousei no Nichijou|anime|201041
 14883|Darker than Black: Kuro no Keiyakusha|anime|200139
 14965|Darker than Black: Kuro no Keiyakusha Gaiden|anime|200139
@@ -1150,8 +1150,8 @@ id|name|type|bucket
 18392|Psyren|manga|0
 14659|Pui Pui Molcar|anime|0
 58070|Punch Line|anime|0
-21773|Quanzhi Gaoshou Specials|anime|0
-23137|Quanzhi Gaoshou: Dianfeng Rongyao|anime|0
+21773|Quanzhi Gaoshou Specials|anime|200025
+23137|Quanzhi Gaoshou: Dianfeng Rongyao|anime|200025
 12329|Rainbow: Nisha Rokubou no Shichinin|anime|0
 2067|Ramayana: The Legend of Prince Rama|anime|0
 57103|Ranma ½|anime|200699
@@ -1819,7 +1819,7 @@ id|name|type|bucket
 108735|Love Live! Sunshine!!|anime|0
 108736|Haiyore! Nyaruko-san W|anime|0
 108737|Berserk 2nd Season|anime|0
-108738|Danganronpa 3: The End of Kibougamine Gakuen - Kibou-hen|anime|0
+108738|Danganronpa 3: The End of Kibougamine Gakuen - Kibou-hen|anime|200015
 108739|Junjou Romantica 2|anime|201025
 108740|Kyoukaisenjou no Horizon|anime|0
 108741|Boku no Pico|anime|0
@@ -2097,3 +2097,6 @@ id|name|type|bucket
 109013|Miira no Kaikata|anime|0
 109014|Spy Kyoushitsu|anime|0
 109015|Honkai: Star Rail|game|0
+109016|Nu Wushen de Canzhuo|anime|200027
+109017|Huangjin Tingyuan: Dongri Li de Xinnian Yuanwang|anime|200027
+109018|Honkai Impact 3rd|game|200027

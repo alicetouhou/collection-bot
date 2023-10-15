@@ -112,6 +112,8 @@ async def get_top_series_ids(session: aiohttp.ClientSession, amount, offset, typ
         resp = await response.read()
         anime_json = json.loads(resp)
 
+        print(anime_json)
+
         output = []
         for anime in anime_json["data"]:
             output.append(
@@ -284,7 +286,7 @@ async def add_series(session, series, index, type="anime", bucket=None):
 
 async def get_series():
     async with aiohttp.ClientSession() as session:
-        series_ids = await get_top_series_ids(session, 200, 1400, type="anime")
+        series_ids = await get_series_from_ids(session, [40100, 54035], type="anime")
         # series_ids = await get_series_from_ids(session, [39681], type="anime")
         for i, series in enumerate(series_ids):
             await add_series(session, series, index=i+1, type="anime")
