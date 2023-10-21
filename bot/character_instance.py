@@ -102,15 +102,16 @@ class CharacterInstance(Character):
         return None
 
     def get_series_icon(self, series: asyncpg.Record):
-        if series["type"] == "bucket":
-            return "📚"
-        if series["type"] == "anime":
-            return "🎬"
-        if series["type"] == "manga":
-            return "📖"
-        if series["type"] == "game":
-            return "🎮"
-        return ""
+        # if series["type"] == "bucket":
+        #     return "📚"
+        # if series["type"] == "anime":
+        #     return "🎬"
+        # if series["type"] == "manga":
+        #     return "📖"
+        # if series["type"] == "game":
+        #     return "🎮"
+        # return ""
+        return "📚"
 
     def get_top_series(self):
         if self.bucket:

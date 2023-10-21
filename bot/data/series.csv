@@ -1186,7 +1186,7 @@ id|name|type|bucket
 10296|Rurouni Kenshin: Meiji Kenkaku Romantan - Seisou-hen|anime|200715
 5357|Rurouni Kenshin: Meiji Kenkaku Romantan - Tsuioku-hen|anime|200715
 57820|Ryuugajou Nanana no Maizoukin|anime|0
-8405|SKET Dance|anime|0
+8405|SKET Dance|collab|0
 3691|SK∞|anime|0
 81748|SQ: Begin W/Your Name!|manga|0
 54828|SSSS.Gridman|anime|0
@@ -1735,7 +1735,7 @@ id|name|type|bucket
 108651|Murenase! Seton Gakuen|anime|0
 108652|Digimon Tamers|anime|0
 108653|Colorful (Movie)|anime|0
-108654|Carnival Phantasm|anime|0
+108654|Carnival Phantasm|collab|0
 108655|Hataage! Kemono Michi|anime|0
 108656|Hunter x Hunter Movie 1: Phantom Rouge|anime|200324
 108657|Ahiru no Sora|anime|0
@@ -2101,3 +2101,5 @@ id|name|type|bucket
 109017|Huangjin Tingyuan: Dongri Li de Xinnian Yuanwang|anime|200027
 109018|Honkai Impact 3rd|game|200027
 109019|ChäoS;Child|game|0
+109020|Luo Xiao Hei Zhan Ji|anime|200009
+109021|Tsukihime: A Piece of Blue Glass Moon - Comic Anthology|manga|200028

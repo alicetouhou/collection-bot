@@ -30,7 +30,8 @@ class DBSearch:
         """Returns `Character` if one exists with the ID. Otherwise, `None` is returned."""
         try:
             records = await self.model.dbpool.fetch(
-                """SELECT characters.*, character_series.*, series.name AS series_name, series.type AS type, 
+                """
+                SELECT characters.*, character_series.*, series.name AS series_name, series.type AS type, 
                 buckets.name AS bucket_name, character_images.image, character_images.index AS image_index
                 FROM characters
                 LEFT JOIN character_series ON characters.id = character_series.character_id
@@ -77,10 +78,8 @@ class DBSearch:
             output = []
 
             result = defaultdict(list)
-
             for d in records:
                 result[d['character_id']].append(d)
-
             result_list = list(result.values())
 
             for record in result_list:
@@ -108,6 +107,12 @@ class DBSearch:
                 if series_entry not in series:
                     series.append(series_entry)
 
+        bucket = None
+        for record in records:
+            if record["type"] == "collab" or not record["bucket_name"]:
+                continue
+            bucket = {"name": record["bucket_name"], "type": "bucket"}
+
         combined_record: asyncpg.Record = {
             "id": records[0]["id"],
             "first_name": records[0]["first_name"],
@@ -115,7 +120,7 @@ class DBSearch:
             "value": records[0]["value"],
             "images": images,
             "series": series,
-            "bucket": {"name": records[0]["bucket_name"], "type": "bucket"} if "bucket_name" in records[0] and records[0]["bucket_name"] else None
+            "bucket": bucket
         }
 
         return combined_record
@@ -134,11 +139,15 @@ class DBSearch:
 
         searches = ["%" + x + "%" for x in search_split]
 
-        sql = """SELECT characters.*, character_series.*, series.name AS series_name, series.type AS type, buckets.name AS bucket_name
+        sql = """
+            SELECT characters.*, character_series.*, series.name AS series_name, series.type AS type, 
+            buckets.name AS bucket_name, character_images.image, character_images.index AS image_index
             FROM characters
             LEFT JOIN character_series ON characters.id = character_series.character_id
+            LEFT JOIN character_images ON characters.id = character_images.character_id
             LEFT JOIN series ON character_series.series_id = series.id
-            LEFT JOIN buckets ON series.bucket = buckets.id """
+            LEFT JOIN buckets ON series.bucket = buckets.id 
+            """
 
         for index, s in enumerate(searches):
             sql += f"""AND (
@@ -167,13 +176,20 @@ class DBSearch:
             *searches,
         )
 
+        result = defaultdict(list)
+        for d in records:
+            result[d['character_id']].append(d)
+        result_list = list(result.values())
+
         output: list[CharacterInstance] = []
-        for record in records:
+
+        for record in result_list:
             if len(output) >= 20:
                 break
-            if record["character_id"] not in [x.id for x in output]:
-                output.append(CharacterInstance(
-                    guild_id, Character.from_record(await self.create_combined_record([record])), self.model))
+            character = Character.from_record(
+                await self.create_combined_record(record))
+            instance = CharacterInstance(guild_id, character, self.model)
+            output.append(instance)
 
         return output
 

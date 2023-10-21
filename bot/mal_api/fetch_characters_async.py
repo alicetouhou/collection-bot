@@ -286,10 +286,13 @@ async def add_series(session, series, index, type="anime", bucket=None):
 
 async def get_series():
     async with aiohttp.ClientSession() as session:
-        series_ids = await get_series_from_ids(session, [30485], type="anime")
+
+        type = "manga"
+        series_ids = await get_series_from_ids(session, [142838], type=type)
         # series_ids = await get_series_from_ids(session, [39681], type="anime")
+
         for i, series in enumerate(series_ids):
-            await add_series(session, series, index=i+1, type="anime")
+            await add_series(session, series, index=i+1, type=type)
 
     characters_csv.to_csv("bot/data/characters.csv", sep="|", index=False)
     series_csv.to_csv("bot/data/series.csv", sep="|", index=False)
