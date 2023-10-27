@@ -184,7 +184,7 @@ class DBSearch:
         output: list[CharacterInstance] = []
 
         for record in result_list:
-            if len(output) >= hard_limit:
+            if hard_limit and len(output) >= hard_limit:
                 break
             character = Character.from_record(
                 await self.create_combined_record(record))
