@@ -126,7 +126,7 @@ class DBSearch:
         return combined_record
 
     async def create_character_from_search(
-        self, guild_id: hikari.Snowflake, search: str, limit=100, filter_str=None, order_by=None
+        self, guild_id: hikari.Snowflake, search: str, limit=100, hard_limit=20, filter_str=None, order_by=None
     ) -> list[CharacterInstance]:
         search_split = search.split(" ")
 
@@ -184,7 +184,7 @@ class DBSearch:
         output: list[CharacterInstance] = []
 
         for record in result_list:
-            if len(output) >= 20:
+            if len(output) >= hard_limit:
                 break
             character = Character.from_record(
                 await self.create_combined_record(record))
