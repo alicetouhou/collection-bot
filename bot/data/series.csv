@@ -531,8 +531,8 @@ id|name|type|bucket
 29876|Highschool of the Dead|anime|200304
 40416|Highschool of the Dead|manga|200304
 29877|Highschool of the Dead: Drifters of the Dead|anime|200304
-4849|Higurashi no Naku Koro ni Gou|anime|0
-4848|Higurashi no Naku Koro ni Kai|anime|0
+4849|Higurashi no Naku Koro ni Gou|anime|200029
+4848|Higurashi no Naku Koro ni Kai|anime|200029
 5781|Hikaru no Go|anime|200307
 7856|Hikaru no Go|manga|200307
 15877|Hikaru no Go: Hokuto Hai e no Michi|anime|200307
@@ -1744,7 +1744,7 @@ id|name|type|bucket
 108660|Strike the Blood II|anime|201017
 108661|Occultic;Nine|anime|0
 108662|Seitokai no Ichizon|anime|0
-108663|Higurashi no Naku Koro ni Rei|anime|0
+108663|Higurashi no Naku Koro ni Rei|anime|200029
 108664|Papa no Iukoto wo Kikinasai!|anime|0
 108665|Shinka no Mi: Shiranai Uchi ni Kachigumi Jinsei|anime|0
 108666|Baki: Dai Raitaisai-hen|anime|0
@@ -2103,3 +2103,4 @@ id|name|type|bucket
 109019|ChäoS;Child|game|0
 109020|Luo Xiao Hei Zhan Ji|anime|200009
 109021|Tsukihime: A Piece of Blue Glass Moon - Comic Anthology|manga|200028
+109022|Mahou Shoujo ni Akogarete|manga|0

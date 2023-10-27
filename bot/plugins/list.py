@@ -62,7 +62,7 @@ class ListCommand:
 
         if self.search:
             char_filter = await dbsearch.create_character_from_search(
-                ctx.guild_id, self.search, limit=100)
+                ctx.guild_id, self.search, limit=None)
             new_list = filter(
                 lambda char: char in char_filter, character_list)
             character_list = list(new_list)
