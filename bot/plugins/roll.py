@@ -90,12 +90,13 @@ class RollCommand:
             msg: str,
             embed: hikari.Embed,
             components: t.Sequence[hikari.api.ComponentBuilder],
+            mentions: t.Sequence[int],
         ):
             return await ctx.respond(
                 msg,
                 embed=embed,
                 components=components,
-                user_mentions=[ctx.user],
+                user_mentions=mentions,
                 ensure_message=True,
             )
 
@@ -136,12 +137,13 @@ async def on_message(event: hikari.GuildMessageCreateEvent):
         msg: str,
         embed: hikari.Embed,
         components: t.Sequence[hikari.api.ComponentBuilder],
+        mentions: t.Sequence[int],
     ):
         return await event.message.respond(
             msg,
             embed=embed,
             components=components,
-            user_mentions=[event.author_id],
+            user_mentions=mentions,
         )
 
     async def send_error(msg: str) -> None:
@@ -159,7 +161,7 @@ async def roll_command(
     guild_id: hikari.Snowflake | None,
     user: hikari.User,
     send_response: t.Callable[
-        [str, hikari.Embed, t.Sequence[hikari.api.ComponentBuilder]],
+        [str, hikari.Embed, t.Sequence[hikari.api.ComponentBuilder], t.Sequence[int]],
         t.Awaitable[hikari.Message],
     ],
     send_error: t.Callable[[str], t.Awaitable[None]],
@@ -216,7 +218,7 @@ async def roll_command(
         wishlist_people_formatted,
         embed,
         view,
-        allow_mentions=True
+        wishlist_people,
     )
 
     await view.start(message)
