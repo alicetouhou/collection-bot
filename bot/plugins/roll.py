@@ -216,7 +216,9 @@ async def roll_command(
         wishlist_people_formatted,
         embed,
         view,
+        allow_mentions=True
     )
+
     await view.start(message)
 
     await player.set_rolls(player.rolls - 1)
